@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from datetime import timedelta
 from rest_framework import status
 import random
-from .models import User
+from .models import User, Profile
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
-  ChangePasswordSerializer
+  ChangePasswordSerializer, ProfileSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -136,3 +136,29 @@ class ChangePasswordAPIView(APIView):
     user.save()
 
     return Response({'message': 'Password changed successfully.'}, status=200)
+
+class ProfileAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  @extend_schema(
+    request=ProfileSerializer,
+    responses={200: None, 400: 'Validation error'}
+  )
+  def patch(self, request):
+    profile = Profile.objects.get(user=request.user)
+    serializer = ProfileSerializer(profile,data=request.data)
+    try:
+      if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+  def get(self, request):
+    try:
+      profile=Profile.objects.get(user=request.user )
+      serializer = ProfileSerializer(profile)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

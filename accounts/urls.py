@@ -14,5 +14,7 @@ urlpatterns = [
     path('otp-verificaiton', views.VerifyOTPView.as_view(), name='otp_verify'),
     path('change-password', views.ChangePasswordAPIView.as_view(), name='change_password'),
 
+    path('profile', views.ProfileAPIView.as_view(), name='profile'),
+
     path('logout', views.LogoutAPIView.as_view(), name='logout'),
 ]

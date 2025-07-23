@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-_fxcmxqehq047c^6^mbu$e$3n#skx*$+pc761^wzj6npqlw=v9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'accounts.apps.AccountsConfig',
+    'jobs.apps.JobsConfig',
+    'service_provider.apps.ServiceProviderConfig',
 
     'rest_framework',
     'rest_framework_simplejwt',
@@ -99,8 +101,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Your Project API',
-    'DESCRIPTION': 'Your project description',
+    'TITLE': 'Swish.ma API',
+    'DESCRIPTION': 'Job posting and searching website',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': True,
     # OTHER SETTINGS

@@ -38,3 +38,16 @@ class LogoutSerializer(serializers.Serializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
   new_password = serializers.CharField(required=True)
+
+class ProfileSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Profile
+    fields = ['first_name', 'last_name', 'address', 'language', 'image']
+    extra_kwargs = {
+      ''
+      'first_name': {'required': False, 'allow_blank': True},
+      'last_name': {'required': False, 'allow_blank': True},
+      'address': {'required': False, 'allow_blank': True},
+      'language': {'required': False, 'allow_blank': True},
+      'image': {'required': False},
+    }

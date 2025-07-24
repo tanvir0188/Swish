@@ -4,9 +4,11 @@ from rest_framework.response import Response
 from datetime import timedelta
 from rest_framework import status
 import random
+
+from jobs.serializers import SubCategorySerializer
 from .models import User, Profile
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
-  ChangePasswordSerializer, ProfileSerializer
+  ChangePasswordSerializer, ProfileSerializer, SubscribeSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -18,22 +20,52 @@ from .utils import send_otp_for_password
 class RegisterView(APIView):
   @extend_schema(
     request=CreateUserSerializer,
-    responses={201: None, 400: 'Validation Error'}
+    responses={201: 'User registered successfully', 400: 'Validation error'}
   )
   def post(self, request):
     serializer = CreateUserSerializer(data=request.data)
     if serializer.is_valid():
       user = serializer.save()
-      return Response({
+      response_data = {
         'message': 'User registered successfully',
-        'user':serializer.data
-      }, status=status.HTTP_201_CREATED)
+        'user': {
+          'id': user.id,
+          'email': user.email,
+          'role': user.role,
+          'first_name': user.first_name,
+          'last_name': user.last_name,
+          'telephone': user.telephone,
+          'full_name': user.full_name,
+          'ice_number': user.company_number,
+          'ccompany_name': user.company_name
+        }
+      }
+      return Response(response_data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
   request=EmailSerializer,
   responses={200: None, 400: 'Validation error'}
 )
+class SubscribeView(APIView):
+  @extend_schema(
+    request=SubscribeSerializer,
+    responses={200: None, 400: 'Validation error'}
+  )
+  def post(self, request):
+    serializer = SubscribeSerializer(data=request.data)
+    if serializer.is_valid():
+      try:
+        serializer.save()
+        return Response({"message": "success"}, status=status.HTTP_200_OK)
+      except Exception as e:
+        return Response(
+          {"error": "An error occurred while saving data.", "details": str(e)},
+          status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forget_password_otp(request):
@@ -161,4 +193,5 @@ class ProfileAPIView(APIView):
       return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
       return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 

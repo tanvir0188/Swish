@@ -27,12 +27,20 @@ class CustomUserManager(BaseUserManager):
       raise ValueError('Superuser must have is_superuser=True.')
 
     return self._create_user(email, first_name, last_name, telephone, password, **extra_fields)
-
+ROLE_CHOICES = [
+  ('private', 'Private'),
+  ('company', 'Company'),
+]
 class User(AbstractUser):
   username=None
   first_name = models.CharField(max_length=255, blank=True, null=True)
   last_name = models.CharField(max_length=255, blank=True, null=True)
+  full_name=models.CharField(max_length=255, blank=True, null=True)
+  company_name=models.CharField(max_length=255, blank=True, null=True)
   telephone= models.CharField(max_length=255, blank=True, null=True)
+  role=models.CharField(choices=ROLE_CHOICES, max_length=255, blank=False, null=False)
+  ice_number = models.CharField(max_length=100, unique=True, blank=True, null=True)
+  address=models.TextField(blank=True, null=True)
   email = models.EmailField(unique=True)
   otp = models.CharField(max_length=4, blank=True, null=True)
   otp_expires = models.DateTimeField(blank=True, null=True)
@@ -70,4 +78,16 @@ class Profile(models.Model):
     verbose_name_plural = 'profiles'
 
 
-	
+class PreSubscription(models.Model):
+  company_name=models.CharField(max_length=255, null=True, blank=True)
+  full_name=models.CharField(max_length=255, null=True, blank=True)
+  email=models.EmailField(max_length=255, null=False, blank=False, unique=True)
+  role = models.CharField(choices=ROLE_CHOICES, max_length=255, null=False, blank=False)
+  city=models.CharField(max_length=255, null=True, blank=True)
+  phone_number=models.CharField(max_length=255, null=True, blank=True)
+  ice_number=models.CharField(max_length=255, null=True, blank=True)
+  def __str__(self):
+    return f'{self.email}'
+  class Meta:
+    verbose_name = 'Pre Subscription'
+    verbose_name_plural = 'PreSubscription Before Launching'

@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import User, Profile
+from .models import User, Profile, PreSubscription
+
+
 # Register your models here.
 
 class UserAdmin(admin.ModelAdmin):
@@ -8,4 +10,5 @@ class UserAdmin(admin.ModelAdmin):
     
 admin.site.register(User, UserAdmin)
 admin.site.register(Profile)
+admin.site.register(PreSubscription)
 

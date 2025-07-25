@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+
+from jobs.models import SubCategory
+
+
 # Create your models here.
 
 
@@ -46,6 +50,7 @@ class User(AbstractUser):
   otp_expires = models.DateTimeField(blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
+  sub_categories=models.ManyToManyField(SubCategory, blank=True)
 
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = ['first_name','last_name', 'telephone']
@@ -53,7 +58,9 @@ class User(AbstractUser):
   objects = CustomUserManager()
 
   def __str__(self):
-    return self.first_name
+    if self.role == 'company':
+      return f'{self.company_name}'
+    return f'{self.first_name}'
 
 
   class Meta:

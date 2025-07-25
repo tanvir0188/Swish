@@ -1,7 +1,5 @@
 from django.db import models
 
-from accounts.models import User
-
 
 # Create your models here.
 
@@ -30,9 +28,10 @@ JOB_STATUS_CHOICES = [
 	('closed', 'closed'),
 	('cancelled', 'cancelled'),
 ]
+
 class Job(models.Model):
-	user = models.ForeignKey(User, on_delete=models.CASCADE)
-	heading = models.CharField(max_length=100, blank=False, null=False)
+	posted_by = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+	heading = models.CharField(max_length=255, blank=False, null=False)
 	description = models.TextField(blank=False, null=False)
 	estimated_time=models.CharField(max_length=100,blank=False, null=False)
 	estimated_employees=models.IntegerField(blank=False, null=False)
@@ -46,6 +45,7 @@ class Job(models.Model):
 	postal_code=models.CharField(max_length=20, blank=False, null=False)
 	contact_swish=models.BooleanField(default=True)
 	status=models.CharField(max_length=10, choices=JOB_STATUS_CHOICES, default='open')
+
 	created_at=models.DateTimeField(auto_now_add=True)
 	updated_at=models.DateTimeField(auto_now=True)
 	def __str__(self):
@@ -53,6 +53,3 @@ class Job(models.Model):
 	class Meta:
 		ordering=['created_at']
 		verbose_name_plural = 'jobs'
-
-
-

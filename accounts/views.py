@@ -9,7 +9,7 @@ from jobs.serializers import SubCategorySerializer
 from .models import User, Profile
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
   ChangePasswordSerializer, ProfileSerializer, SubscribeSerializer
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
@@ -35,9 +35,6 @@ class RegisterView(APIView):
           'first_name': user.first_name,
           'last_name': user.last_name,
           'telephone': user.telephone,
-          'full_name': user.full_name,
-          'ice_number': user.company_number,
-          'ccompany_name': user.company_name
         }
       }
       return Response(response_data, status=status.HTTP_201_CREATED)
@@ -65,7 +62,10 @@ class SubscribeView(APIView):
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(
+  request=EmailSerializer,
+  responses={200: None, 400: 'Validation error'}
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forget_password_otp(request):
@@ -155,6 +155,10 @@ class ChangePasswordAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
 
+  @extend_schema(
+    request=ChangePasswordSerializer,
+    responses={200:None, 400: 'Validation Error'}
+  )
   def patch(self, request):
     user = request.user
     serializer = ChangePasswordSerializer(data=request.data)

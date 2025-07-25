@@ -18,13 +18,16 @@ class JobAPIView(APIView):
   )
   def post(self, request):
     serializer=JobSerializer(data=request.data)
-    if serializer.is_valid():
-      serializer.save(user=request.user)
-      return Response({
-        'message': 'Your job has been posted',
-        'status': 'success'
-      }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.user.role == 'private':
+      if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response({
+          'message': 'Your job has been posted',
+          'status': 'success'
+        }, status=status.HTTP_201_CREATED)
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'error': 'Login as private account to post job'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryAPIView(APIView):
   permission_classes = [AllowAny]

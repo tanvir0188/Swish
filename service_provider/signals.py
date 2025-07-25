@@ -7,6 +7,6 @@ import string
 
 @receiver(post_save, sender=User)
 def create_company_profile(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.role == 'company':
         # Create a CompanyProfile linked to the new user
         CompanyProfile.objects.create(user=instance,company_name=instance.full_name, phone_number=instance.telephone, location=instance.address, business_email=instance.email )

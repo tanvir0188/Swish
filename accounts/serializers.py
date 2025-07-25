@@ -1,23 +1,21 @@
 from rest_framework import serializers
-from .models import User, Profile, PreSubscription
+from .models import User, Profile, PreSubscription, ROLE_CHOICES
 import re
 
 class CreateUserSerializer(serializers.ModelSerializer):
+  role=serializers.ChoiceField(choices=ROLE_CHOICES)
   class Meta:
     model = User
-    fields = ['email', 'password', 'role', 'first_name', 'last_name', 'telephone', 'full_name', 'ice_number', 'company_name']
+    fields = ['email', 'password', 'role', 'first_name', 'last_name', 'telephone']
     extra_kwargs = {
       'password': {'write_only': True},
       'first_name': {'required': False, 'allow_null': True, 'allow_blank': True},
       'last_name': {'required': False, 'allow_null': True, 'allow_blank': True},
-      'telephone': {'required': False, 'allow_null': True, 'allow_blank': True},
-      'full_name': {'required': False, 'allow_null': True, 'allow_blank': True},
-      'company_name': {'required': False, 'allow_null': True, 'allow_blank': True},
-      'ice_number': {'required': False, 'allow_null': True, 'allow_blank': True},
+      'telephone': {'required': False, 'allow_null': True, 'allow_blank': True}
     }
 
   def validate_password(self, password):
-    if len(password) < 6:
+    if len(password) < 8:
       raise serializers.ValidationError("Password must be at least 6 characters long.")
     if not re.search(r'[A-Z]', password):
       raise serializers.ValidationError("Password must contain at least one uppercase letter.")
@@ -27,11 +25,16 @@ class CreateUserSerializer(serializers.ModelSerializer):
       raise serializers.ValidationError("Password must contain at least one digit.")
     return password
 
-  def validate_full_name(self, full_name):
-    if full_name:
-      if not re.match(r'^[A-Za-z ]+$', full_name):
+  def validate_first_name(self, first_name):
+    if first_name:
+      if not re.match(r'^[A-Za-z ]+$', first_name):
         raise serializers.ValidationError("Full name can only contain letters and spaces.")
-    return full_name
+    return first_name
+  def validate_last_name(self, last_name):
+    if last_name:
+      if not re.match(r'^[A-Za-z ]+$', last_name):
+        raise serializers.ValidationError("Full name can only contain letters and spaces.")
+    return last_name
 
   def create(self, validated_data):
     password = validated_data.pop('password')
@@ -61,6 +64,16 @@ class LogoutSerializer(serializers.Serializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
   new_password = serializers.CharField(required=True)
+  def validate_new_password(self, new_password):
+    if len(new_password) < 8:
+      raise serializers.ValidationError("Password must be at least 6 characters long.")
+    if not re.search(r'[A-Z]', new_password):
+      raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+    if not re.search(r'[a-z]', new_password):
+      raise serializers.ValidationError("Password must contain at least one lowercase letter.")
+    if not re.search(r'\d', new_password):
+      raise serializers.ValidationError("Password must contain at least one digit.")
+    return new_password
 
 class ProfileSerializer(serializers.ModelSerializer):
   class Meta:

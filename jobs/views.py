@@ -1,12 +1,16 @@
+from django.db.models import Prefetch
 from django.shortcuts import render
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from jobs.models import Category, SubCategory
-from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer
+from jobs.models import Category, SubCategory, Job
+from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer, \
+  BidStatusUpdateSerializer
+from service_provider.models import Bid
 
 
 # Create your views here.
@@ -20,7 +24,7 @@ class JobAPIView(APIView):
     serializer=JobSerializer(data=request.data)
     if request.user.role == 'private':
       if serializer.is_valid():
-        serializer.save(user=request.user)
+        serializer.save(posted_by=request.user)
         return Response({
           'message': 'Your job has been posted',
           'status': 'success'
@@ -66,3 +70,127 @@ class BulkSubCategoryAPIView(APIView):
     SubCategory.objects.bulk_create(subcategories)
 
     return Response({"detail": "Subcategories created."}, status=status.HTTP_200_OK)
+
+@api_view(['get'])
+@permission_classes([IsAuthenticated])
+def my_job_posts(request):
+  try:
+    jobs = Job.objects.filter(posted_by=request.user) \
+      .prefetch_related(
+      Prefetch(
+        'bid_set',
+        queryset=Bid.objects.select_related('bidding_company')
+      )
+    )
+
+    response = []
+
+    for job in jobs:
+      bidder_response = [
+        {
+          'id': bidder.id,
+          'company_name': bidder.bidding_company.company_name,
+          'company_user_id': bidder.bidding_company.id,
+          'proposal_description': bidder.proposal_description,
+          'telephone': bidder.bidding_company.telephone,
+          'status': bidder.status,
+          'amount': bidder.amount,
+          'timeline': bidder.time_estimate,
+          'placed': bidder.created_at
+        }
+        for bidder in job.bid_set.all()
+      ]
+
+      response.append({
+        'id': job.id,
+        'heading': job.heading,
+        'description': job.description,
+        'posted': job.created_at,
+        'status': job.status,
+        'bids': len(bidder_response),
+        'bidder_response': bidder_response
+      })
+
+    return Response({
+      'status': 'success',
+      'jobs': response
+    }, status=status.HTTP_200_OK)
+
+  except Exception as e:
+    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+  methods=["PATCH"],
+  request=BidStatusUpdateSerializer,
+  responses={
+    200: BidStatusUpdateSerializer,
+    400: OpenApiExample("Bad Request", value={"error": "Missing bid_id"}),
+    403: OpenApiExample("Forbidden", value={"error": "Unauthorized"}),
+    404: OpenApiExample("Not Found", value={"error": "Job not found"}),
+  },
+  description="Change the status of a bid for a given job. Also updates the job status to 'In Progress'.",
+)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def change_bid_status(request, pk):
+  try:
+    bid = Bid.objects.get(pk=pk)
+    job = bid.job
+
+    # Only job owner can update the bid status
+    if job.posted_by != request.user:
+      return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Reject further bidding if job is no longer open
+    if job.status in ['In Progress', 'Completed', 'Paused']:
+      return Response({'error': f'Cannot update bid. Job is already {job.status}.'},
+                      status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = BidStatusUpdateSerializer(bid, data=request.data, partial=True)
+    if serializer.is_valid():
+      serializer.save()
+
+      # Update job status based on bid status
+      bid_status = serializer.validated_data.get('status')
+      if bid_status == 'Complete':
+        job.status = 'In Progress'
+        job.save()
+      elif bid_status == 'Rejected':
+        job.status = 'Open'
+        job.save()
+
+      return Response({'message': 'Bid status updated', 'bid': bid.status, 'job_status': job.status},
+                      status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  except Bid.DoesNotExist:
+    return Response({'error': 'Bid not found'}, status=status.HTTP_404_NOT_FOUND)
+  except Exception as e:
+    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def patch_job_status(request, pk):
+  try:
+    job = Job.objects.get(pk=pk)
+    if job.posted_by != request.user:
+      return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+    job.status='Paused'
+    job.save()
+    return Response({'message': 'Job status paused', 'status': job.status}, status=status.HTTP_200_OK)
+  except Exception as e:
+    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_job(request, pk):
+  try:
+    job = Job.objects.get(pk=pk)
+    if job.posted_by == request.user:
+      job.delete()
+      return Response({'message':'Job deleted'},status=status.HTTP_200_OK)
+    return Response({'error':'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+  except Exception as e:
+    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

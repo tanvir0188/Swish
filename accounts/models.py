@@ -38,19 +38,22 @@ ROLE_CHOICES = [
 class User(AbstractUser):
   username=None
   first_name = models.CharField(max_length=255, blank=True, null=True)
-  last_name = models.CharField(max_length=255, blank=True, null=True)
+  surname = models.CharField(max_length=255, blank=True, null=True)
   full_name=models.CharField(max_length=255, blank=True, null=True)
   company_name=models.CharField(max_length=255, blank=True, null=True)
   telephone= models.CharField(max_length=255, blank=True, null=True)
   role=models.CharField(choices=ROLE_CHOICES, max_length=255, blank=False, null=False)
   ice_number = models.CharField(max_length=100, unique=True, blank=True, null=True)
   address=models.TextField(blank=True, null=True)
+  city=models.CharField(max_length=255, blank=True, null=True)
   email = models.EmailField(unique=True)
   otp = models.CharField(max_length=4, blank=True, null=True)
   otp_expires = models.DateTimeField(blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   sub_categories=models.ManyToManyField(SubCategory, blank=True)
+  language=models.CharField(max_length=255, blank=True, null=True)
+  image = models.ImageField(upload_to='uploads/profile_images/', blank=True, null=True)
 
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = ['first_name','last_name', 'telephone']
@@ -60,29 +63,13 @@ class User(AbstractUser):
   def __str__(self):
     if self.role == 'company':
       return f'{self.company_name}'
-    return f'{self.first_name}'
+    return f'{self.first_name} {self.surname}'
 
 
   class Meta:
     verbose_name = 'User'
     verbose_name_plural = 'Users'
 
-
-
-class Profile(models.Model):
-  user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-  first_name=models.CharField(max_length=255, null=True, blank=True)
-  last_name=models.CharField(max_length=255, null=True, blank=True)
-  address=models.TextField(max_length=500, null=True, blank=True)
-  language=models.CharField(max_length=255, null=True, blank=True)
-  image = models.ImageField(upload_to='uploads/profile_images/', blank=True, null=True)
-
-  def __str__(self):
-    return f'{self.user or self.user.email}'
-
-  class Meta:
-    verbose_name = 'profile'
-    verbose_name_plural = 'profiles'
 
 
 class PreSubscription(models.Model):

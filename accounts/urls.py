@@ -16,7 +16,7 @@ urlpatterns = [
 
     path('pre-subscription', views.SubscribeView.as_view(), name='pre_subscription'),
 
-    path('profile', views.ProfileAPIView.as_view(), name='profile'),
+    path('profile', views.UpdateProfileAPIView.as_view(), name='profile'),
 
     path('logout', views.LogoutAPIView.as_view(), name='logout'),
 ]

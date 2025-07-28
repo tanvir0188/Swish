@@ -23,9 +23,9 @@ class CompanyProfile(models.Model):
     verbose_name='Company'
 
 BID_STATUS_CHOICES = [
-  ('active', 'Active'),
-  ('complete', 'Complete'),
-  ('rejected', 'Rejected'),
+  ('Active', 'Active'),
+  ('Complete', 'Complete'),
+  ('Rejected', 'Rejected'),
 ]
 class Bid(models.Model):
   job=models.ForeignKey(Job, on_delete=models.CASCADE)

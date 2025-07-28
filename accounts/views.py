@@ -6,9 +6,9 @@ from rest_framework import status
 import random
 
 from jobs.serializers import SubCategorySerializer
-from .models import User, Profile
+from .models import User
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
-  ChangePasswordSerializer, ProfileSerializer, SubscribeSerializer
+  ChangePasswordSerializer, SubscribeSerializer, ProfileSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -172,30 +172,23 @@ class ChangePasswordAPIView(APIView):
     user.save()
 
     return Response({'message': 'Password changed successfully.'}, status=200)
-
-class ProfileAPIView(APIView):
+class UpdateProfileAPIView(APIView):
   permission_classes = [IsAuthenticated]
+
   @extend_schema(
     request=ProfileSerializer,
-    responses={200: None, 400: 'Validation error'}
+    responses={200: None, 400: 'Validation Error'}
   )
   def patch(self, request):
-    profile = Profile.objects.get(user=request.user)
-    serializer = ProfileSerializer(profile,data=request.data)
-    try:
-      if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    user = request.user
+    serializer = ProfileSerializer(user, data=request.data, partial=True)
+    if not serializer.is_valid():
+      return Response(serializer.errors, status=400)
+    serializer.save()
+    return Response({'data':serializer.data, 'message':'Profile updated successfully'}, status=200)
 
-  def get(self, request):
-    try:
-      profile=Profile.objects.get(user=request.user )
-      serializer = ProfileSerializer(profile)
-      return Response(serializer.data, status=status.HTTP_200_OK)
-    except Exception as e:
-      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 

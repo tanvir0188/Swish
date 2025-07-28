@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Profile, PreSubscription, ROLE_CHOICES
+from .models import User, PreSubscription, ROLE_CHOICES
 import re
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -43,6 +43,10 @@ class CreateUserSerializer(serializers.ModelSerializer):
     user.save()
     return user
 
+class ProfileSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = User
+    fields = ['first_name', 'surname','email', 'telephone', 'address', 'city']
 
 class OTPSerializer(serializers.Serializer):
   email = serializers.EmailField()
@@ -74,19 +78,6 @@ class ChangePasswordSerializer(serializers.Serializer):
     if not re.search(r'\d', new_password):
       raise serializers.ValidationError("Password must contain at least one digit.")
     return new_password
-
-class ProfileSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Profile
-    fields = ['first_name', 'last_name', 'address', 'language', 'image']
-    extra_kwargs = {
-      ''
-      'first_name': {'required': False, 'allow_blank': True},
-      'last_name': {'required': False, 'allow_blank': True},
-      'address': {'required': False, 'allow_blank': True},
-      'language': {'required': False, 'allow_blank': True},
-      'image': {'required': False},
-    }
 
 class SubscribeSerializer(serializers.ModelSerializer):
   class Meta:

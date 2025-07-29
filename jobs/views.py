@@ -77,6 +77,8 @@ class BulkSubCategoryAPIView(APIView):
 @permission_classes([IsAuthenticated])
 def my_job_posts(request):
   try:
+    if request.user.role != 'private':
+      return Response({'error':'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
     jobs = Job.objects.filter(posted_by=request.user) \
       .prefetch_related(
       Prefetch(

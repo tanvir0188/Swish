@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+from django.utils import timezone
 from django.db import models
 from multiselectfield import MultiSelectField
 
@@ -70,23 +70,27 @@ class TokenPackage(models.Model):
   expires_at=models.DateTimeField(blank=False, null=False)
 
   def save(self, *args, **kwargs):
-    if self.package_name == 'Starter' and not self.is_paid:
-      self.package_balance = 40
-      self.expires_at = self.issued_at + timedelta(days=90)
-    elif self.package_name == 'Starter' and self.is_paid:
-      self.package_balance=40
-      self.expires_at=self.issued_at+timedelta(days=365)
-    elif self.package_name == 'Growth':
-      self.package_balance = 100
-      self.expires_at = self.issued_at + timedelta(days=365)
-    elif self.package_name == 'Pro':
-      self.package_balance = 200
-      self.expires_at = self.issued_at + timedelta(days=365)
-    elif self.package_name == 'Elite':
-      self.package_balance = 400
-      self.expires_at = self.issued_at + timedelta(days=365)
+    now = timezone.now()
+    if self._state.adding:
+      if self.package_name == 'Starter' and not self.is_paid:
+        self.package_balance = 40
+        self.expires_at = now + timedelta(days=90)
+      elif self.package_name == 'Starter' and self.is_paid:
+        self.package_balance=40
+        self.expires_at=now+timedelta(days=365)
+      elif self.package_name == 'Growth':
+        self.package_balance = 100
+        self.expires_at = now + timedelta(days=365)
+      elif self.package_name == 'Pro':
+        self.package_balance = 200
+        self.expires_at = now + timedelta(days=365)
+      elif self.package_name == 'Elite':
+        self.package_balance = 400
+        self.expires_at = now + timedelta(days=365)
 
     super().save(*args, **kwargs)
+  def __str__(self):
+    return self.package_name
 
 
 #Token transaction is actually the token

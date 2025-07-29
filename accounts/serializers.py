@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, PreSubscription, ROLE_CHOICES
+from .models import User, PreSubscription, ROLE_CHOICES, Feedback
 import re
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -89,3 +89,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
       'company_name': {'required': False, 'allow_null': True, 'allow_blank': True},
       'ice_number': {'required': False, 'allow_null': True, 'allow_blank': True},
     }
+
+class FeedbackSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Feedback
+    fields=['suggestion']

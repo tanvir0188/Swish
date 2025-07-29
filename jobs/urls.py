@@ -1,7 +1,7 @@
 from django.urls import path
 
 from jobs.views import JobAPIView, CategoryAPIView, CategoryDetailListAPIView, BulkSubCategoryAPIView, my_job_posts, \
-	change_bid_status, patch_job_status, delete_job
+	change_bid_status, patch_job_status, delete_job, ReviewAPIView, JobPausingReasonAPIView
 
 urlpatterns = [
 	path('job', JobAPIView.as_view(), name='job-creation'),
@@ -12,4 +12,7 @@ urlpatterns = [
 	path('my-jobs', my_job_posts, name='my-jobs'),
 	path('bid-status/<int:pk>', change_bid_status, name='bid-status'),
 	path('job-status/<int:pk>', patch_job_status, name='job-status'),
+	path('review/<int:pk>', ReviewAPIView.as_view(), name='review'),
+	path('job-pausing-reason/<int:pk>', JobPausingReasonAPIView.as_view(), name='job-pausing-reason'),
+
 ]

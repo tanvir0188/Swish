@@ -85,3 +85,12 @@ class PreSubscription(models.Model):
   class Meta:
     verbose_name = 'Pre Subscription'
     verbose_name_plural = 'PreSubscription Before Launching'
+
+class Feedback(models.Model):
+  user = models.ForeignKey(User, on_delete=models.CASCADE)
+  suggestion=models.TextField(blank=False, null=False)
+  def __str__(self):
+    return f'Feedback({self.user.email})'
+  class Meta:
+    verbose_name = 'Feedback'
+    verbose_name_plural = 'Feedbacks'

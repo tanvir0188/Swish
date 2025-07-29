@@ -8,7 +8,7 @@ import random
 from jobs.serializers import SubCategorySerializer
 from .models import User
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
-  ChangePasswordSerializer, SubscribeSerializer, ProfileSerializer
+  ChangePasswordSerializer, SubscribeSerializer, ProfileSerializer, FeedbackSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -186,7 +186,21 @@ class UpdateProfileAPIView(APIView):
       return Response(serializer.errors, status=400)
     serializer.save()
     return Response({'data':serializer.data, 'message':'Profile updated successfully'}, status=200)
-
+class FeedbackAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  @extend_schema(
+    request=FeedbackSerializer,
+    responses={200: None, 400: 'Validation Error'}
+  )
+  def post(self, request):
+    serializer = FeedbackSerializer(data=request.data)
+    try:
+      if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response('Feedback posted successfully', status=200)
+      return Response(serializer.errors, status=400)
+    except Exception as e:
+      return Response({'error': str(e)}, status=400)
 
 
 

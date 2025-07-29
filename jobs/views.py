@@ -6,10 +6,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from yaml import serializer
 
-from jobs.models import Category, SubCategory, Job
+from accounts.models import User
+from jobs.models import Category, SubCategory, Job, JobPauseReason
 from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer, \
-  BidStatusUpdateSerializer
+  BidStatusUpdateSerializer, ReviewSerializer, JobPausingReasonSerializer
 from service_provider.models import Bid
 
 
@@ -194,3 +196,64 @@ def delete_job(request, pk):
     return Response({'error':'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
   except Exception as e:
     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  @extend_schema(
+    request=ReviewSerializer,
+    responses={200: None, 400: 'Validation error'}
+  )
+  def post(self, request, pk):
+    try:
+      service_provider = User.objects.get(id=pk)
+      if service_provider.role != 'company':
+        return Response({'error': 'Only users with company role can receive reviews.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    except User.DoesNotExist:
+      return Response({'error': 'Service provider not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.user.role != 'private':
+      return Response({'error': 'Only private users can post reviews.'}, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = ReviewSerializer(data=request.data)
+    if serializer.is_valid():
+      serializer.save(user=request.user, service_provider=service_provider)
+      return Response({'message': 'Review posted successfully.'}, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class JobPausingReasonAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  @extend_schema(
+    request=JobPausingReasonSerializer,
+    responses={200: None, 400: 'Validation error'}
+  )
+  def post(self, request, pk):
+    try:
+      job = Job.objects.get(pk=pk)
+
+      if job.posted_by != request.user:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+      if job.status != 'Paused':
+        return Response({'error': 'Bad Request'}, status=status.HTTP_400_BAD_REQUEST)
+
+      # Update if already exists, else create
+      reason_instance = JobPauseReason.objects.filter(job=job).first()
+
+      if reason_instance:
+        serializer = JobPausingReasonSerializer(reason_instance, data=request.data)
+      else:
+        serializer = JobPausingReasonSerializer(data=request.data)
+
+      if serializer.is_valid():
+        serializer.save(job=job)
+        return Response({'message': 'Thanks for your feedback.'}, status=status.HTTP_201_CREATED)
+
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

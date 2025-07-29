@@ -1,6 +1,6 @@
-from rest_framework import serializers
+from rest_framework import serializers, fields
 
-from jobs.models import Job, Category, SubCategory
+from jobs.models import Job, Category, SubCategory, Review, JobPauseReason, REASON_CHOICES
 from service_provider.models import Bid
 
 
@@ -42,3 +42,14 @@ class BidStatusUpdateSerializer(serializers.ModelSerializer):
   class Meta:
     model = Bid
     fields = ['status']
+
+class ReviewSerializer(serializers.ModelSerializer):
+  class Meta:
+    model=Review
+    fields=['review', 'rating']
+
+class JobPausingReasonSerializer(serializers.ModelSerializer):
+  reasons = serializers.MultipleChoiceField(choices=REASON_CHOICES)
+  class Meta:
+    model = JobPauseReason
+    fields=['reasons']

@@ -1,12 +1,13 @@
+from datetime import timedelta
+
 from django.db import models
+from multiselectfield import MultiSelectField
 
 from accounts.models import User
 from jobs.models import Category, Job, SubCategory
 # Create your models here.
 class CompanyProfile(models.Model):
   user=models.OneToOneField(User, on_delete=models.CASCADE, related_name='company_profile')
-  clip_balance = models.IntegerField(default=100, blank=False, null=False)
-  clip_granted_at=models.DateTimeField(auto_now_add=True)
   company_name=models.CharField(max_length=100, unique=True)
   phone_number= models.CharField(max_length=20, unique=True)
   sub_category=models.ManyToManyField(SubCategory, blank=True)
@@ -53,14 +54,51 @@ class Employee(models.Model):
     ordering=['designation']
     verbose_name_plural='Employees'
 
-class ClipTransaction(models.Model):
-  job=models.OneToOneField(Job, on_delete=models.CASCADE, related_name='transaction')
-  user=models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaction')
-  created_at=models.DateTimeField(auto_now_add=True)
+PACKAGE_CHOICES = [
+  ('Starter', 'Starter'),
+  ('Growth', 'Growth'),
+  ('Pro', 'Pro'),
+  ('Elite', 'Elite')
+]
+
+class TokenPackage(models.Model):
+  company=models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+  is_paid=models.BooleanField(default=True)
+  package_name=models.CharField(choices=PACKAGE_CHOICES, blank=False, null=False)
+  package_balance=models.PositiveIntegerField(blank=False, null=False)
+  issued_at=models.DateTimeField(auto_now_add=True)
+  expires_at=models.DateTimeField(blank=False, null=False)
+
+  def save(self, *args, **kwargs):
+    if self.package_name == 'Starter' and not self.is_paid:
+      self.package_balance = 40
+      self.expires_at = self.issued_at + timedelta(days=90)
+    elif self.package_name == 'Starter' and self.is_paid:
+      self.package_balance=40
+      self.expires_at=self.issued_at+timedelta(days=365)
+    elif self.package_name == 'Growth':
+      self.package_balance = 100
+      self.expires_at = self.issued_at + timedelta(days=365)
+    elif self.package_name == 'Pro':
+      self.package_balance = 200
+      self.expires_at = self.issued_at + timedelta(days=365)
+    elif self.package_name == 'Elite':
+      self.package_balance = 400
+      self.expires_at = self.issued_at + timedelta(days=365)
+
+    super().save(*args, **kwargs)
+
+
+#Token transaction is actually the token
+class TokenTransaction(models.Model):
+  package=models.ForeignKey(TokenPackage, on_delete=models.CASCADE)
+  job=models.OneToOneField(Job, on_delete=models.SET_NULL,null=True, related_name='transactions')
+  used_by=models.ForeignKey(User, on_delete=models.SET_NULL,null=True, related_name='transactions')
+  used_at=models.DateTimeField(auto_now_add=True)
 
   def __str__(self):
-    return f"{self.job.heading} - {self.user.email}"
+    return f"{self.job.heading} - {self.used_by.email}"
   class Meta:
-    unique_together=('job', 'user')
+    unique_together=('job', 'used_by')
 
 

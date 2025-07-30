@@ -6,12 +6,11 @@ class CreateUserSerializer(serializers.ModelSerializer):
   role=serializers.ChoiceField(choices=ROLE_CHOICES)
   class Meta:
     model = User
-    fields = ['email', 'password', 'role', 'first_name', 'surname','company_name', 'telephone']
+    fields = ['email', 'password', 'role', 'first_name', 'surname', 'telephone']
     extra_kwargs = {
       'password': {'write_only': True},
       'first_name': {'required': False, 'allow_null': True, 'allow_blank': True},
       'surname': {'required': False, 'allow_null': True, 'allow_blank': True},
-      'company_name':{'required': False, 'allow_null': True, 'allow_blank': True},
       'telephone': {'required': False, 'allow_null': True, 'allow_blank': True}
     }
 

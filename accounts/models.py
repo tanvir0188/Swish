@@ -54,6 +54,7 @@ class User(AbstractUser):
   sub_categories=models.ManyToManyField(SubCategory, blank=True)
   language=models.CharField(max_length=255, blank=True, null=True)
   image = models.ImageField(upload_to='uploads/profile_images/', blank=True, null=True)
+  last_seen = models.DateTimeField(null=True, blank=True)
 
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = ['first_name','last_name', 'telephone']

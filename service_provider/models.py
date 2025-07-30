@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django.utils.timezone import localtime
+
 from django.utils import timezone
 from django.db import models
 from multiselectfield import MultiSelectField
@@ -62,7 +64,7 @@ PACKAGE_CHOICES = [
 ]
 
 class TokenPackage(models.Model):
-  company=models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+  company=models.ForeignKey(User, on_delete=models.CASCADE)
   is_paid=models.BooleanField(default=True)
   package_name=models.CharField(choices=PACKAGE_CHOICES, blank=False, null=False)
   package_balance=models.PositiveIntegerField(blank=False, null=False)
@@ -101,7 +103,8 @@ class TokenTransaction(models.Model):
   used_at=models.DateTimeField(auto_now_add=True)
 
   def __str__(self):
-    return f"{self.job.heading} - {self.used_by.email}"
+    formatted_time = localtime(self.used_at).strftime('%b %d, %Y – %I:%M %p')
+    return f"{self.job.heading} - {self.used_by.company_name} used at {formatted_time}"
   class Meta:
     unique_together=('job', 'used_by')
 

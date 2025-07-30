@@ -2,6 +2,10 @@ import random
 
 from django.core.mail import send_mail
 from swish import settings
+from django.utils import timezone
+from datetime import timedelta
+from .models import User  # or use get_user_model()
+
 def send_otp_for_password(email, otp):
   subject = "Verification Code for Resetting Password"
   plain_message = f'Your verification code is {otp}. Expires in 1 minute.'

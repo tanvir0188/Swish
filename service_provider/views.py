@@ -1,6 +1,7 @@
 from collections import deque
 
 from django.shortcuts import render
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -9,9 +10,8 @@ from rest_framework.views import APIView
 
 from jobs.models import Job
 from service_provider.models import TokenPackage, TokenTransaction
+from jobs.models import Job
 
-
-# Create your views here.
 class UnlockJobAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
@@ -27,13 +27,14 @@ class UnlockJobAPIView(APIView):
     except Job.DoesNotExist:
       return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    company = request.user.company_profile
+    company = request.user
 
     try:
       # Get the earliest valid package
       package = TokenPackage.objects.filter(
         company=company,
-        package_balance__gt=0
+        package_balance__gt=0,
+        expires_at__gte=timezone.now()
       ).earliest('issued_at')
     except TokenPackage.DoesNotExist:
       return Response({'error': 'No available tokens'}, status=status.HTTP_400_BAD_REQUEST)
@@ -45,12 +46,8 @@ class UnlockJobAPIView(APIView):
         job=job,
         used_by=used_by
       )
-      # Decrease balance
-      print(package.package_balance)
       package.package_balance -= 1
-      print(package.package_balance)
       package.save()
-      print(package.package_balance)
 
       return Response({
         'message': 'Job unlocked successfully',
@@ -63,3 +60,7 @@ class UnlockJobAPIView(APIView):
         'details': str(e)
       }, status=status.HTTP_400_BAD_REQUEST)
 
+class JobListApiView(APIView):
+  permission_classes = [IsAuthenticated]
+  def get(self, request):
+    jobs = Job.objects.filter()

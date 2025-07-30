@@ -7,5 +7,5 @@ from .models import CompanyProfile, TokenPackage
 def create_company_profile(sender, instance, created, **kwargs):
   if created and instance.role == 'company':
     # Create a CompanyProfile linked to the new user
-    company=CompanyProfile.objects.create(user=instance,company_name=instance.company_name, phone_number=instance.telephone)
-    TokenPackage.objects.create(company=company,is_paid = False, package_name='Starter')
+    CompanyProfile.objects.create(user=instance,company_name=instance.company_name, phone_number=instance.telephone)
+    TokenPackage.objects.create(company=instance,is_paid = False, package_name='Starter')

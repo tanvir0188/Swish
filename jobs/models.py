@@ -38,6 +38,7 @@ class Job(models.Model):
   estimated_time=models.CharField(max_length=100,blank=False, null=False)
   employee_need=models.IntegerField(blank=False, null=False)
   site_photo=models.ImageField(upload_to="uploads/site_photos", null=True, blank=True)
+  area = models.ForeignKey('Area', on_delete=models.CASCADE, related_name='job_areas')
   value=models.FloatField(blank=True, null=True)
   category=models.ForeignKey(Category, on_delete=models.CASCADE, related_name='jobs')
   email=models.EmailField(blank=False, null=False)
@@ -56,6 +57,13 @@ class Job(models.Model):
   class Meta:
     ordering=['created_at']
     verbose_name_plural = 'jobs'
+class Area(models.Model):
+  name=models.CharField(max_length=100, unique=True, db_index=True)
+  def __str__(self):
+    return self.name
+  class Meta:
+    ordering=['name']
+    verbose_name_plural='Areas'
 
 class Review(models.Model):
   service_provider = models.ForeignKey(

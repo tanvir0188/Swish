@@ -6,17 +6,22 @@ from django.db import models
 from multiselectfield import MultiSelectField
 
 from accounts.models import User
-from jobs.models import Category, Job, SubCategory
+from jobs.models import Category, Job, SubCategory, Area
+
+
 # Create your models here.
 class CompanyProfile(models.Model):
   user=models.OneToOneField(User, on_delete=models.CASCADE, related_name='company_profile')
   company_name=models.CharField(max_length=100, unique=True)
   phone_number= models.CharField(max_length=20, unique=True)
   sub_category=models.ManyToManyField(SubCategory, blank=True)
+  area = models.ManyToManyField(Area, blank=True)
   logo=models.ImageField(upload_to='uploads/company_logos', null=True, blank=True)
   wallpaper=models.ImageField(upload_to='uploads/company_wallpapers', null=True, blank=True)
   about=models.TextField(blank=True, null=True)
   ice_number=models.CharField(max_length=255, unique=True)
+  business_email=models.CharField(max_length=255, unique=True)
+  address=models.TextField(blank=True, null=True)
   city=models.CharField(max_length=255, blank=True, null=True)
   monday_time=models.DateTimeField(blank=True, null=True)
   tuesday_time=models.DateTimeField(blank=True, null=True)
@@ -32,6 +37,7 @@ class CompanyProfile(models.Model):
   tiktok=models.URLField(blank=True)
   created_at=models.DateTimeField(auto_now_add=True)
   updated_at=models.DateTimeField(auto_now=True)
+  open_in_weekend=models.BooleanField(default=False)
 
   def __str__(self):
     return self.company_name
@@ -119,7 +125,7 @@ class TokenTransaction(models.Model):
 
   def __str__(self):
     formatted_time = localtime(self.used_at).strftime('%b %d, %Y – %I:%M %p')
-    return f"{self.job.heading} - {self.used_by.company_name} used at {formatted_time}"
+    return f"{self.job.heading} - {self.used_by.company_profile.company_name} used at {formatted_time}"
   class Meta:
     unique_together=('job', 'used_by')
 

@@ -46,7 +46,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ['first_name', 'surname','email', 'telephone', 'address', 'city']
+    fields = ['first_name', 'surname', 'telephone', 'email', 'home_address', 'city']
 
 class OTPSerializer(serializers.Serializer):
   email = serializers.EmailField()
@@ -94,3 +94,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
   class Meta:
     model = Feedback
     fields=['suggestion']
+
+class ChangeRoleSerializer(serializers.ModelSerializer):
+  role = serializers.ChoiceField(choices=ROLE_CHOICES)
+  class Meta:
+    model = User
+    fields = ['role']

@@ -43,6 +43,7 @@ class User(AbstractUser):
   telephone= models.CharField(max_length=255, blank=True, null=True)
   role=models.CharField(choices=ROLE_CHOICES, max_length=255, blank=False, null=False)
   city=models.CharField(max_length=255, blank=True, null=True)
+  home_address=models.CharField(max_length=255, blank=True, null=True)
   email = models.EmailField(unique=True)
   otp = models.CharField(max_length=4, blank=True, null=True)
   otp_expires = models.DateTimeField(blank=True, null=True)
@@ -53,13 +54,11 @@ class User(AbstractUser):
   last_seen = models.DateTimeField(null=True, blank=True)
 
   USERNAME_FIELD = 'email'
-  REQUIRED_FIELDS = ['first_name','last_name', 'telephone']
+  REQUIRED_FIELDS = ['first_name','surname', 'telephone']
 
   objects = CustomUserManager()
 
   def __str__(self):
-    if self.role == 'company':
-      return f'{self.company_name}'
     return f'{self.first_name} {self.surname}'
 
 

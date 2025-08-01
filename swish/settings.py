@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 from datetime import timedelta
 from django.conf.global_settings import EMAIL_PORT
@@ -122,9 +122,13 @@ WSGI_APPLICATION = 'swish.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("RDS_DB_NAME"),
+        "USER": os.getenv("RDS_USERNAME"),
+        "PASSWORD": os.getenv("RDS_PASSWORD"),
+        "HOST": os.getenv("RDS_HOST"),      # e.g. abc123.us-east-1.rds.amazonaws.com
+        "PORT": os.getenv("RDS_PORT", "5432"),
     }
 }
 

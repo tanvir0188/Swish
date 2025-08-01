@@ -29,6 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -123,12 +124,12 @@ WSGI_APPLICATION = 'swish.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.getenv("RDS_DB_NAME"),
-        "USER": os.getenv("RDS_USERNAME"),
-        "PASSWORD": os.getenv("RDS_PASSWORD"),
-        "HOST": os.getenv("RDS_HOST"),      # e.g. abc123.us-east-1.rds.amazonaws.com
-        "PORT": os.getenv("RDS_PORT", "5432"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "pre_launch",
+        "USER": "dev_subscription",
+        "PASSWORD": "MohinUddin12!*",
+        "HOST": "database-1.cdu8is68ks4p.ap-south-1.rds.amazonaws.com",      # e.g. abc123.us-east-1.rds.amazonaws.com
+        "PORT": "5432",
     }
 }
 

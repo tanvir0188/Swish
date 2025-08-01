@@ -71,7 +71,7 @@ class SubscribeView(APIView):
     if serializer.is_valid():
       try:
         serializer.save()
-        return Response({"message": "success"}, status=status.HTTP_200_OK)
+        return Response({"message": "Subscription successful"}, status=status.HTTP_200_OK)
       except Exception as e:
         return Response(
           {"error": "An error occurred while saving data.", "details": str(e)},

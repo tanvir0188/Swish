@@ -2,13 +2,15 @@ from collections import deque
 
 from django.shortcuts import render
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from jobs.models import Job
+from jobs.models import Job, Area, SubCategory
+from jobs.serializers import JobSerializer
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile
 from jobs.models import Job
 from service_provider.serializers import CompanyProfileSerializer
@@ -87,9 +89,99 @@ class CompanyRegisterAPIView(APIView):
           'error': 'Something went wrong while registering the company.',
           'details': str(e)
         }, status=status.HTTP_502_BAD_GATEWAY)
+@extend_schema(
+  methods=["PATCH"],
+  summary="Add work area to company profile",
+  description="Adds a new area (if not existing) to the company’s profile and the global Area list.",
+  request={
+    "application/json": {
+      "type": "object",
+      "properties": {
+        "area": {
+          "type": "string",
+          "example": "Casablanca"
+        }
+      },
+      "required": ["area"]
+    }
+  },
+  responses={
+    200: OpenApiResponse(description="Area successfully added to company profile."),
+    400: OpenApiResponse(description="Bad request – area missing."),
+    403: OpenApiResponse(description="Forbidden – only company users can add areas.")
+  }
+)
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def add_area(request):
+  if request.user.role != 'company':
+    return Response({"detail": "Only companies can add areas."}, status=status.HTTP_403_FORBIDDEN)
+
+  area_name = request.data.get('area')
+  if not area_name:
+    return Response({"detail": "Area name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+  # Get or create the Area object
+  area_obj, created = Area.objects.get_or_create(name=area_name)
+
+  # Add to the company profile
+  company_profile = request.user.company_profile
+  company_profile.area.add(area_obj)
+
+  return Response({
+    "detail": "Area added successfully.",
+    "area": area_obj.name,
+    "created_new": created
+  }, status=status.HTTP_200_OK)
+
+@extend_schema(
+  methods=["PATCH"],
+  summary="Add work type (sub-category) to company profile",
+  description="Adds a new work type to the company’s profile. If it doesn’t exist globally, it is created.",
+  request={
+    "application/json": {
+      "type": "object",
+      "properties": {
+        "work_type": {
+          "type": "string",
+          "example": "Electrician"
+        }
+      },
+      "required": ["work_type"]
+    }
+  },
+  responses={
+    200: OpenApiResponse(description="Work type successfully added to company profile."),
+    400: OpenApiResponse(description="Bad request – work_type missing."),
+    403: OpenApiResponse(description="Forbidden – only company users can add work types.")
+  }
+)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def add_work_type(request):
+  if request.user.role != 'company':
+    return Response({"detail": "Only companies can add work types."}, status=status.HTTP_403_FORBIDDEN)
+
+  work_type_name = request.data.get('work_type')
+  if not work_type_name:
+    return Response({"detail": "Work type is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+  # Get or create the SubCategory object
+  subcategory_obj, created = SubCategory.objects.get_or_create(name=work_type_name)
+
+  # Add to the company profile
+  company_profile = request.user.company_profile
+  company_profile.sub_category.add(subcategory_obj)
+
+  return Response({
+    "detail": "Work type added successfully.",
+    "work_type": subcategory_obj.name,
+    "created_new": created
+  }, status=status.HTTP_200_OK)
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def get_job_list(request):
 
 
-# class JobListApiView(APIView):
-#   permission_classes = [IsAuthenticated]
-#   def get(self, request):
-#     jobs = Job.objects.filter()

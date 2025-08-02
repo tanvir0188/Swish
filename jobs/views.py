@@ -57,7 +57,7 @@ class BulkSubCategoryAPIView(APIView):
     responses={200: None, 400: 'Validation error'}
   )
 
-  def post(self, request):  # ⚠️ Use lowercase 'post'
+  def post(self, request):
     serializer = AddSubCategorySerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 

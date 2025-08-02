@@ -5,15 +5,17 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from jobs.models import Job, Area, SubCategory
 from jobs.serializers import JobSerializer
+from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile
 from jobs.models import Job
-from service_provider.serializers import CompanyProfileSerializer
+from service_provider.serializers import CompanyProfileSerializer, JobListSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -180,8 +182,36 @@ def add_work_type(request):
     "created_new": created
   }, status=status.HTTP_200_OK)
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def get_job_list(request):
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_job_list(request):
+  user = request.user
+
+  # Step 1: Get user's subcategories
+  try:
+    company_profile = user.company_profile
+    subcategories = company_profile.sub_category.all()
+  except:
+    return Response({'error': 'No company profile or subcategories found'}, status=400)
+
+  # Step 2: Filter jobs by subcategories (linked through Category)
+  jobs = Job.objects.filter(
+    category__in=[sub.category for sub in subcategories]
+  ).exclude(
+    posted_by=user  # ✅ Exclude jobs posted by the current user
+  )
+
+  # Step 3: Apply filters from query params
+  job_filter = JobFilter(request.GET, queryset=jobs)
+
+  # Step 4: Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(job_filter.qs, request)
+
+  # Step 5: Serialize
+  serializer = JobListSerializer(result_page, many=True)
+  return paginator.get_paginated_response(serializer.data)
 
 

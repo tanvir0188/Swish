@@ -78,7 +78,7 @@ class CompanyRegisterAPIView(APIView):
 
       return Response({
         'message': f'Already registered a company using {company_profile.user.email}.',
-      })
+      }, status=status.HTTP_400_BAD_REQUEST)
     except CompanyProfile.DoesNotExist:
       serializer = CompanyProfileSerializer(data=request.data)
       try:
@@ -213,5 +213,4 @@ def filtered_job_list(request):
   # Step 5: Serialize
   serializer = JobListSerializer(result_page, many=True)
   return paginator.get_paginated_response(serializer.data)
-
 

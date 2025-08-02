@@ -93,7 +93,7 @@ def my_job_posts(request):
       bidder_response = [
         {
           'id': bidder.id,
-          'company_name': bidder.bidding_company.company_name,
+          'company_name': bidder.bidding_company.company_profile.company_name,
           'company_user_id': bidder.bidding_company.id,
           'proposal_description': bidder.proposal_description,
           'telephone': bidder.bidding_company.telephone,

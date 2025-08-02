@@ -22,7 +22,8 @@ class SubCategory(models.Model):
   class Meta:
     ordering=['name']
     verbose_name_plural='Sub Categories'
-
+class Favorite(models.Model):
+  job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='favorites')
 
 JOB_STATUS_CHOICES = [
     ('Open', 'Open'),

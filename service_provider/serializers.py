@@ -26,7 +26,7 @@ class JobListSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = Job
-    fields = ['id', 'posted_by', 'image', 'heading', 'mission_address', 'created_at', 'description', 'bids']
+    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids']
 
   def get_posted_by(self, obj):
     return f"{obj.first_name} {obj.surname}"
@@ -36,7 +36,7 @@ class JobListSerializer(serializers.ModelSerializer):
     return user_image.url if user_image else "https://png.pngtree.com/png-vector/20220608/ourmid/pngtree-unnamed-user-avatar-icon-profile-png-image_4816337.png"
 
   def get_description(self, obj):
-    return obj.description[:len(obj.description) // 5]  # 20%
+    return obj.description[:len(obj.description) // 5] + '...'  # 20%
 
   def get_bids(self, obj):
     return Bid.objects.filter(job=obj).count()

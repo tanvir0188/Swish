@@ -10,7 +10,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from jobs.serializers import SubCategorySerializer
 from .models import User
 from .serializers import CreateUserSerializer, LogoutSerializer, OTPSerializer, EmailSerializer, \
-  ChangePasswordSerializer, SubscribeSerializer, FeedbackSerializer, ProfileSerializer, ChangeRoleSerializer
+  ChangePasswordSerializer, SubscribeSerializer, FeedbackSerializer, ProfileSerializer, ChangeRoleSerializer, \
+  MyTokenObtainPairSerializer
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny

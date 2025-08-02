@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User, PreSubscription, ROLE_CHOICES, Feedback
@@ -103,3 +104,8 @@ class ChangeRoleSerializer(serializers.ModelSerializer):
     model = User
     fields = ['role']
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+  @classmethod
+  def get_token(cls, user):
+    token = MyRefreshToken.for_user(user)
+    return token

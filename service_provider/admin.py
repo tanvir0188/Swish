@@ -6,7 +6,10 @@ from service_provider.models import CompanyProfile, Bid, TokenPackage, TokenTran
 # Register your models here.
 admin.site.register(CompanyProfile)
 admin.site.register(Bid)
-admin.site.register(TokenPackage)
+class TokenPackageAdmin(admin.ModelAdmin):
+	list_display = ('company', 'package_name', 'package_balance', 'issued_at', 'expires_at', 'is_paid')
+
+admin.site.register(TokenPackage, TokenPackageAdmin)
 admin.site.register(TokenTransaction)
 class FavoriteAdmin(admin.ModelAdmin):
 	list_display = ('user', 'job')

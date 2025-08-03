@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from multiselectfield import MultiSelectField
 
@@ -23,6 +24,14 @@ class SubCategory(models.Model):
     ordering=['name']
     verbose_name_plural='Sub Categories'
 
+class CustomCategory(models.Model):
+  name=models.CharField(max_length=100, unique=True, db_index=True)
+  def __str__(self):
+    return self.name
+  class Meta:
+    ordering=['name']
+    verbose_name_plural='Custom Categories'
+
 class Favorite(models.Model):
   user=models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='favorites')
   job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='favorited_by')
@@ -40,32 +49,41 @@ JOB_STATUS_CHOICES = [
     ('Paused', 'Paused'),
 ]
 
+
 class Job(models.Model):
   posted_by = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
   heading = models.CharField(max_length=255, blank=False, null=False)
   description = models.TextField(blank=False, null=False)
-  estimated_time=models.CharField(max_length=100,blank=False, null=False)
-  employee_need=models.IntegerField(blank=False, null=False)
-  site_photo=models.ImageField(upload_to="uploads/site_photos", null=True, blank=True)
+  estimated_time = models.CharField(max_length=100, blank=False, null=False)
+  employee_need = models.IntegerField(blank=False, null=False)
+  site_photo = models.ImageField(upload_to="uploads/site_photos", null=True, blank=True)
   area = models.ForeignKey('Area', on_delete=models.CASCADE, related_name='job_areas')
-  value=models.FloatField(blank=True, null=True)
-  category=models.ForeignKey(Category, on_delete=models.CASCADE, related_name='jobs')
-  email=models.EmailField(blank=False, null=False)
+  value = models.FloatField(blank=True, null=True)
+  category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='jobs')
+  custom_category = models.ForeignKey(CustomCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
+  email = models.EmailField(blank=False, null=False)
   first_name = models.CharField(max_length=100, blank=False, null=False)
   surname = models.CharField(max_length=100, blank=False, null=False)
   telephone_number = models.CharField(max_length=100, blank=False, null=False)
-  mission_address=models.CharField(max_length=255, blank=False, null=False)
-  postal_code=models.CharField(max_length=20, blank=False, null=False)
-  through_swish_or_telephone=models.BooleanField(default=True)
-  status=models.CharField(max_length=20, choices=JOB_STATUS_CHOICES, default='open')
+  mission_address = models.CharField(max_length=255, blank=False, null=False)
+  postal_code = models.CharField(max_length=20, blank=False, null=False)
+  through_swish_or_telephone = models.BooleanField(default=True)
+  status = models.CharField(max_length=20, choices=JOB_STATUS_CHOICES, default='open')
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
 
-  created_at=models.DateTimeField(auto_now_add=True)
-  updated_at=models.DateTimeField(auto_now=True)
+  def clean(self):
+    super().clean()
+    if not self.category and not self.custom_category:
+      raise ValidationError("You must provide either a category or an odd category.")
+
   def __str__(self):
     return self.heading
+
   class Meta:
-    ordering=['created_at']
+    ordering = ['created_at']
     verbose_name_plural = 'jobs'
+
 class Area(models.Model):
   name=models.CharField(max_length=100, unique=True, db_index=True)
   def __str__(self):

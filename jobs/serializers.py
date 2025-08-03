@@ -7,7 +7,7 @@ from service_provider.models import Bid
 class JobSerializer(serializers.ModelSerializer):
   class Meta:
     model = Job
-    fields=['heading', 'description','category', 'estimated_time', 'employee_need','site_photo', 'value', 'email', 'first_name', 'surname', 'telephone_number', 'mission_address', 'area','postal_code', 'through_swish_or_telephone']
+    fields=['heading', 'description','category','custom_category', 'estimated_time', 'employee_need','site_photo', 'value', 'email', 'first_name', 'surname', 'telephone_number', 'mission_address', 'area','postal_code', 'through_swish_or_telephone']
 
 class CategorySerializer(serializers.ModelSerializer):
   class Meta:

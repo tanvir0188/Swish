@@ -5,6 +5,9 @@ from jobs.models import Category, Job, SubCategory, JobPauseReason, Area
 # Register your models here.
 admin.site.register(Category)
 admin.site.register(SubCategory)
-admin.site.register(Job)
+class JobAdmin(admin.ModelAdmin):
+    list_display = ('heading', 'posted_by', 'category', 'custom_category', 'value', 'created_at')
+    list_per_page = 20  # number of jobs per page
+admin.site.register(Job, JobAdmin)
 admin.site.register(JobPauseReason)
 admin.site.register(Area)

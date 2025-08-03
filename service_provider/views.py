@@ -219,6 +219,7 @@ class ToggleFavoriteAPIView(APIView):
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
     OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
     OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)
@@ -262,6 +263,7 @@ def filtered_all_job_list(request):
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
     OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
     OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)
@@ -309,6 +311,7 @@ def filtered_new_job_list(request):
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
     OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
     OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)
@@ -356,6 +359,7 @@ def filtered_favorite_job_list(request):
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
     OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
     OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)
@@ -400,6 +404,7 @@ def filtered_responded_job_list(request):
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
     OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
     OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)

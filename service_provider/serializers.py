@@ -1,7 +1,9 @@
+from django.db.models import Sum
+from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.models import User
-from service_provider.models import TokenTransaction, CompanyProfile, Bid
+from service_provider.models import TokenTransaction, CompanyProfile, Bid, TokenPackage
 from jobs.models import Job, SubCategory, Favorite, Area
 import random
 import string
@@ -40,10 +42,20 @@ class AreaSerializer(serializers.ModelSerializer):
 class SideBarInfoSerializer(serializers.ModelSerializer):
   sub_category = SubCategorySerializer(many=True, read_only=True)
   area = AreaSerializer(many=True, read_only=True)
+  tokens = serializers.SerializerMethodField()
 
   class Meta:
     model = CompanyProfile  # Replace with your actual model name
-    fields = ['sub_category', 'area']
+    fields = ['sub_category', 'area', 'tokens']
+
+  def get_tokens(self, obj):
+    user = obj.user  # Assuming CompanyProfile has a FK to User named `user`
+    valid_tokens = TokenPackage.objects.filter(
+      company=user,
+      package_balance__gt=0,
+      expires_at__gt=timezone.now()
+    ).aggregate(total=Sum('package_balance'))['total'] or 0
+    return valid_tokens
 
 
 

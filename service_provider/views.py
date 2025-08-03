@@ -444,11 +444,11 @@ def filtered_won_job_list(request):
 class SideBarInfoAPIView(APIView):
   permission_classes = [IsAuthenticated]
   def get(self, request):
-    company_profile = getattr(request.user, 'company_profile', None)
+    company_profile = request.user.company_profile
     if not company_profile:
       return Response({
         "error": "User does not have a company profile."
       }, status=400)
-    serializer = SideBarInfoSerializer(company_profile)
+    serializer = SideBarInfoSerializer(company_profile, context={'request': request})
     return Response(serializer.data)
 

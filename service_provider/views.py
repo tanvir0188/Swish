@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from jobs.models import Job, Area, SubCategory, Favorite
 from jobs.serializers import JobSerializer
 from service_provider.filters import JobFilter
-from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile
+from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
 from jobs.models import Job
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
   SideBarInfoSerializer
@@ -300,6 +300,143 @@ def filtered_new_job_list(request):
   result_page = paginator.paginate_queryset(filtered_jobs, request)
 
   # Serialize
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
+  return paginator.get_paginated_response(serializer.data)
+
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_favorite_job_list(request):
+  user = request.user
+
+  try:
+    company_profile = user.company_profile
+    subcategories = company_profile.sub_category.all()
+  except:
+    return Response({'error': 'No company profile or subcategories found'}, status=400)
+
+  # Filter jobs in relevant subcategories and exclude self-posted
+  jobs = Job.objects.filter(
+    category__in=[sub.category for sub in subcategories]
+  ).exclude(
+    posted_by=user
+  )
+
+  # Include only favorited jobs (not exclude)
+  favorite_job_ids = Favorite.objects.filter(user=user).values_list('job_id', flat=True)
+  jobs = jobs.filter(id__in=favorite_job_ids)
+
+  # Apply JobFilter
+  job_filter = JobFilter(request.GET, queryset=jobs)
+
+  # Apply distinct here to avoid duplicates from joins
+  filtered_jobs = job_filter.qs.distinct()
+
+  # Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
+
+  # Serialize
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
+  return paginator.get_paginated_response(serializer.data)
+
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_responded_job_list(request):
+  user = request.user
+
+  try:
+    company_profile = user.company_profile
+    subcategories = company_profile.sub_category.all()
+  except:
+    return Response({'error': 'No company profile or subcategories found'}, status=400)
+
+  # Get jobs unlocked by the user via TokenTransaction
+  unlocked_job_ids = TokenTransaction.objects.filter(used_by=user).values_list('job_id', flat=True)
+
+  jobs = Job.objects.filter(
+    id__in=unlocked_job_ids,
+    category__in=[sub.category for sub in subcategories]
+  ).exclude(
+    posted_by=user
+  )
+
+  # Apply filtering
+  job_filter = JobFilter(request.GET, queryset=jobs)
+  filtered_jobs = job_filter.qs.distinct()
+
+  # Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
+
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
+  return paginator.get_paginated_response(serializer.data)
+
+
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_won_job_list(request):
+  user = request.user
+
+  try:
+    company_profile = user.company_profile
+    subcategories = company_profile.sub_category.all()
+  except:
+    return Response({'error': 'No company profile or subcategories found'}, status=400)
+
+  # Get jobs where user has bidded with status 'Complete'
+  won_job_ids = Bid.objects.filter(
+    bidding_company=user,
+    status='Complete',
+    job__category__in=[sub.category for sub in subcategories]
+  ).values_list('job_id', flat=True)
+
+  jobs = Job.objects.filter(
+    id__in=won_job_ids
+  ).exclude(
+    posted_by=user
+  )
+
+  # Apply filtering
+  job_filter = JobFilter(request.GET, queryset=jobs)
+  filtered_jobs = job_filter.qs.distinct()
+
+  # Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
+
   serializer = JobListSerializer(result_page, many=True, context={'request': request})
   return paginator.get_paginated_response(serializer.data)
 

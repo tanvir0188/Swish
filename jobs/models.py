@@ -119,6 +119,7 @@ REASON_CHOICES = (("Job is postponed", 'Job is postponed'),
                        ('Mistaken post', 'Mistaken post'),
                        ('Budget or requirements changed', 'Budget or requirements changed'),
                        ('Other','Other'))
+
 class JobPauseReason(models.Model):
   job=models.OneToOneField(Job, on_delete=models.CASCADE)
   reasons = MultiSelectField(choices=REASON_CHOICES, blank=False, null=False)

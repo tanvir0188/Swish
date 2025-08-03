@@ -2,7 +2,8 @@ from collections import deque
 
 from django.shortcuts import render
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -210,7 +211,16 @@ class ToggleFavoriteAPIView(APIView):
         return Response({'message': 'Added to favorites'}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,many=True, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,many=True, required=False, description='Filter by area name'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def filtered_job_list(request):
@@ -239,6 +249,6 @@ def filtered_job_list(request):
   result_page = paginator.paginate_queryset(job_filter.qs, request)
 
   # Step 5: Serialize
-  serializer = JobListSerializer(result_page, many=True)
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
   return paginator.get_paginated_response(serializer.data)
 

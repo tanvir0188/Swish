@@ -34,7 +34,6 @@ class JobAPIView(APIView):
       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     return Response({'error': 'Login as private account to post job'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class CategoryAPIView(APIView):
   permission_classes = [AllowAny]
 
@@ -50,6 +49,7 @@ class CategoryDetailListAPIView(APIView):
     serializer=CategoryDetailListSerializer(categories,many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+# has to be deleted
 class BulkSubCategoryAPIView(APIView):
   permission_classes = [AllowAny]
   @extend_schema(
@@ -134,7 +134,6 @@ def my_job_posts(request):
   },
   description="Change the status of a bid for a given job. Also updates the job status to 'In Progress'.",
 )
-
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def change_bid_status(request, pk):

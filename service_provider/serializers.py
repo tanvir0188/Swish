@@ -28,10 +28,11 @@ class JobListSerializer(serializers.ModelSerializer):
   image = serializers.SerializerMethodField()
   description = serializers.SerializerMethodField()
   bids = serializers.SerializerMethodField()
+  is_favorite=serializers.SerializerMethodField()
 
   class Meta:
     model = Job
-    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids']
+    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids', 'is_favorite']
 
   def get_posted_by(self, obj):
     return f"{obj.first_name} {obj.surname}"
@@ -45,4 +46,13 @@ class JobListSerializer(serializers.ModelSerializer):
 
   def get_bids(self, obj):
     return Bid.objects.filter(job=obj).count()
+
+  def get_is_favorite(self, obj):
+    request = self.context.get('request')
+    user = request.user if request else None
+
+    if user and user.is_authenticated:
+      return Favorite.objects.filter(user=user.id, job=obj).exists()
+    return False
+
 

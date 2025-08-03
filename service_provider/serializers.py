@@ -57,8 +57,6 @@ class SideBarInfoSerializer(serializers.ModelSerializer):
     ).aggregate(total=Sum('package_balance'))['total'] or 0
     return valid_tokens
 
-
-
 class JobListSerializer(serializers.ModelSerializer):
   posted_by = serializers.SerializerMethodField()
   image = serializers.SerializerMethodField()
@@ -91,4 +89,7 @@ class JobListSerializer(serializers.ModelSerializer):
       return Favorite.objects.filter(user=user.id, job=obj).exists()
     return False
 
+# class JobDescriptionSerializer(serializers.ModelSerializer):
+#   class Meta:
+#     model = Job
 

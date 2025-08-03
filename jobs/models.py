@@ -56,7 +56,6 @@ class Job(models.Model):
   description = models.TextField(blank=False, null=False)
   estimated_time = models.CharField(max_length=100, blank=False, null=False)
   employee_need = models.IntegerField(blank=False, null=False)
-  site_photo = models.ImageField(upload_to="uploads/site_photos", null=True, blank=True)
   area = models.ForeignKey('Area', on_delete=models.CASCADE, related_name='job_areas')
   value = models.FloatField(blank=True, null=True)
   category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='jobs')
@@ -83,6 +82,14 @@ class Job(models.Model):
   class Meta:
     ordering = ['created_at']
     verbose_name_plural = 'jobs'
+
+class SiteImage(models.Model):
+  job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='images')
+  image = models.ImageField(upload_to="uploads/site_images", null=False, blank=False)
+  def __str__(self):
+    return self.job.heading
+  class Meta:
+    verbose_name_plural = 'site images'
 
 class Area(models.Model):
   name=models.CharField(max_length=100, unique=True, db_index=True)

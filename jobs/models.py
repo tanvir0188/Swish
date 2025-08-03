@@ -22,8 +22,16 @@ class SubCategory(models.Model):
   class Meta:
     ordering=['name']
     verbose_name_plural='Sub Categories'
+
 class Favorite(models.Model):
-  job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='favorites')
+  user=models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='favorites')
+  job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='favorited_by')
+  class Meta:
+    unique_together = ('user', 'job')
+
+  def __str__(self):
+    return f'{self.user.username} - {self.job.heading}'
+
 
 JOB_STATUS_CHOICES = [
     ('Open', 'Open'),

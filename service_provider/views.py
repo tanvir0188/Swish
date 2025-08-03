@@ -10,12 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from jobs.models import Job, Area, SubCategory
+from jobs.models import Job, Area, SubCategory, Favorite
 from jobs.serializers import JobSerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile
 from jobs.models import Job
-from service_provider.serializers import CompanyProfileSerializer, JobListSerializer
+from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -181,6 +181,34 @@ def add_work_type(request):
     "work_type": subcategory_obj.name,
     "created_new": created
   }, status=status.HTTP_200_OK)
+
+class ToggleFavoriteAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  @extend_schema(
+    request=AddFavoriteSerializer,
+    responses={200: 'Ok', 400: 'Validation error'}
+  )
+  def post(self, request):
+    if request.user.role != 'company':
+      return Response({
+        "message": "Only companies can manage favorites."
+      }, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = AddFavoriteSerializer(data=request.data)
+    if serializer.is_valid():
+      job = serializer.validated_data['job']
+      user = request.user
+
+      # Try to get existing favorite entry
+      favorite = Favorite.objects.filter(user=user, job=job).first()
+      if favorite:
+        favorite.delete()
+        return Response({'message': 'Removed from favorites'}, status=status.HTTP_200_OK)
+      else:
+        Favorite.objects.create(user=user, job=job)
+        return Response({'message': 'Added to favorites'}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

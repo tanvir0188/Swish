@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from service_provider.models import TokenTransaction, CompanyProfile, Bid
-from jobs.models import Job, SubCategory
+from jobs.models import Job, SubCategory, Favorite
 import random
 import string
 from django.utils.crypto import get_random_string
@@ -17,6 +17,11 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
   class Meta:
     model = CompanyProfile
     fields=['company_name', 'phone_number', 'ice_number', 'address', 'city', 'about','business_email','sub_category', 'facebook', 'instagram', 'youtube', 'tiktok', 'homepage', 'monday_time', 'tuesday_time','wednesday_time','thursday_time', 'friday_time', 'saturday_time','sunday_time', 'open_in_weekend']
+
+class AddFavoriteSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Favorite
+    fields = ['job']
 
 class JobListSerializer(serializers.ModelSerializer):
   posted_by = serializers.SerializerMethodField()

@@ -1,2 +1,10 @@
-/db.sqlite3
-*pyc
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore compiled files in all subdirectories
+**/__pycache__/
+**/*.py[cod]
+
+# Ignore SQLite DB
+db.sqlite3

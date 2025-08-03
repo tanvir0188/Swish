@@ -16,7 +16,8 @@ from jobs.serializers import JobSerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile
 from jobs.models import Job
-from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer
+from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
+  SideBarInfoSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -114,6 +115,7 @@ class CompanyRegisterAPIView(APIView):
     403: OpenApiResponse(description="Forbidden – only company users can add areas.")
   }
 )
+
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def add_area(request):
@@ -215,15 +217,15 @@ class ToggleFavoriteAPIView(APIView):
   parameters=[
     OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
     OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
-    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,many=True, required=False, description='Filter by subcategory name'),
-    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY,many=True, required=False, description='Filter by area name'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
     OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
   ],
   responses=JobListSerializer(many=True)
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def filtered_job_list(request):
+def filtered_all_job_list(request):
   user = request.user
 
   # Step 1: Get user's subcategories
@@ -242,13 +244,74 @@ def filtered_job_list(request):
 
   # Step 3: Apply filters from query params
   job_filter = JobFilter(request.GET, queryset=jobs)
+  filtered_jobs = job_filter.qs.distinct().order_by('-created_at')
 
   # Step 4: Paginate
   paginator = PageNumberPagination()
   paginator.page_size = 6
-  result_page = paginator.paginate_queryset(job_filter.qs, request)
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
 
   # Step 5: Serialize
   serializer = JobListSerializer(result_page, many=True, context={'request': request})
   return paginator.get_paginated_response(serializer.data)
+
+
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_new_job_list(request):
+  user = request.user
+
+  try:
+    company_profile = user.company_profile
+    subcategories = company_profile.sub_category.all()
+  except:
+    return Response({'error': 'No company profile or subcategories found'}, status=400)
+
+  # Filter jobs in relevant subcategories and exclude self-posted
+  jobs = Job.objects.filter(
+    category__in=[sub.category for sub in subcategories]
+  ).exclude(
+    posted_by=user
+  )
+
+  # Exclude jobs already unlocked
+  unlocked_job_ids = TokenTransaction.objects.filter(used_by=user).values_list('job_id', flat=True)
+  jobs = jobs.exclude(id__in=unlocked_job_ids)
+
+  # Apply JobFilter
+  job_filter = JobFilter(request.GET, queryset=jobs)
+
+  # Apply distinct here to avoid duplicates from joins
+  filtered_jobs = job_filter.qs.distinct().order_by('-created_at')
+
+  # Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
+
+  # Serialize
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
+  return paginator.get_paginated_response(serializer.data)
+
+
+class SideBarInfoAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  def get(self, request):
+    company_profile = getattr(request.user, 'company_profile', None)
+    if not company_profile:
+      return Response({
+        "error": "User does not have a company profile."
+      }, status=400)
+    serializer = SideBarInfoSerializer(company_profile)
+    return Response(serializer.data)
 

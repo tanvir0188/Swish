@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from service_provider.models import TokenTransaction, CompanyProfile, Bid
-from jobs.models import Job, SubCategory, Favorite
+from jobs.models import Job, SubCategory, Favorite, Area
 import random
 import string
 from django.utils.crypto import get_random_string
@@ -22,6 +22,30 @@ class AddFavoriteSerializer(serializers.ModelSerializer):
   class Meta:
     model = Favorite
     fields = ['job']
+
+class SubCategorySerializer(serializers.ModelSerializer):
+  class Meta:
+    model = SubCategory
+    fields = ['id', 'name']
+
+class AreaSerializer(serializers.ModelSerializer):
+  number_of_jobs=serializers.SerializerMethodField()
+  class Meta:
+    model = Area
+    fields = ['id', 'name', 'number_of_jobs']
+
+  def get_number_of_jobs(self, obj):
+    return Job.objects.filter(area=obj).count()
+
+class SideBarInfoSerializer(serializers.ModelSerializer):
+  sub_category = SubCategorySerializer(many=True, read_only=True)
+  area = AreaSerializer(many=True, read_only=True)
+
+  class Meta:
+    model = CompanyProfile  # Replace with your actual model name
+    fields = ['sub_category', 'area']
+
+
 
 class JobListSerializer(serializers.ModelSerializer):
   posted_by = serializers.SerializerMethodField()

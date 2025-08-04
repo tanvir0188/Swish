@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from yaml import serializer
 
 from accounts.models import User
-from jobs.models import Category, SubCategory, Job, JobPauseReason
+from jobs.models import Category, SubCategory, Job, JobPauseReason, SiteImage
 from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer, \
   BidStatusUpdateSerializer, ReviewSerializer, JobPausingReasonSerializer
 from service_provider.models import Bid
@@ -18,21 +18,25 @@ from service_provider.models import Bid
 # Create your views here.
 class JobAPIView(APIView):
   permission_classes = [IsAuthenticated]
+
   @extend_schema(
     request=JobSerializer,
     responses={201: None, 400: 'Validation Error'}
   )
   def post(self, request):
-    serializer=JobSerializer(data=request.data)
-    if request.user.role == 'private':
-      if serializer.is_valid():
-        serializer.save(posted_by=request.user)
-        return Response({
-          'message': 'Your job has been posted',
-          'status': 'success'
-        }, status=status.HTTP_201_CREATED)
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'error': 'Login as private account to post job'}, status=status.HTTP_400_BAD_REQUEST)
+    if request.user.role != 'private':
+      return Response({'error': 'Login as private account to post job'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = JobSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+      job = serializer.save(posted_by=request.user)
+      return Response({
+        'message': 'Your job has been posted',
+        'status': 'success'
+      }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryAPIView(APIView):
   permission_classes = [AllowAny]

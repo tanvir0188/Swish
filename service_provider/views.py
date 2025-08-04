@@ -227,6 +227,35 @@ class ToggleFavoriteAPIView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def filtered_all_job_list(request):
+  # Filter jobs in relevant subcategories and exclude self-posted
+  jobs = Job.objects.all()
+  # Apply JobFilter
+  job_filter = JobFilter(request.GET, queryset=jobs)
+
+  # Apply distinct here to avoid duplicates from joins
+  filtered_jobs = job_filter.qs.distinct().order_by('-created_at')
+  # Paginate
+  paginator = PageNumberPagination()
+  paginator.page_size = 6
+  result_page = paginator.paginate_queryset(filtered_jobs, request)
+  # Serialize
+  serializer = JobListSerializer(result_page, many=True, context={'request': request})
+  return paginator.get_paginated_response(serializer.data)
+
+@extend_schema(
+  parameters=[
+    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
+    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
+    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
+    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
+    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
+    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
+  ],
+  responses=JobListSerializer(many=True)
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def filtered_recommended_job_list(request):
   user = request.user
 
   # Step 1: Get user's subcategories
@@ -255,6 +284,7 @@ def filtered_all_job_list(request):
   # Step 5: Serialize
   serializer = JobListSerializer(result_page, many=True, context={'request': request})
   return paginator.get_paginated_response(serializer.data)
+
 
 
 @extend_schema(

@@ -25,38 +25,6 @@ class AddFavoriteSerializer(serializers.ModelSerializer):
     model = Favorite
     fields = ['job']
 
-class SubCategorySerializer(serializers.ModelSerializer):
-  class Meta:
-    model = SubCategory
-    fields = ['id', 'name']
-
-class AreaSerializer(serializers.ModelSerializer):
-  number_of_jobs=serializers.SerializerMethodField()
-  class Meta:
-    model = Area
-    fields = ['id', 'name', 'number_of_jobs']
-
-  def get_number_of_jobs(self, obj):
-    return Job.objects.filter(area=obj).count()
-
-class SideBarInfoSerializer(serializers.ModelSerializer):
-  sub_category = SubCategorySerializer(many=True, read_only=True)
-  area = AreaSerializer(many=True, read_only=True)
-  tokens = serializers.SerializerMethodField()
-
-  class Meta:
-    model = CompanyProfile  # Replace with your actual model name
-    fields = ['sub_category', 'area', 'tokens']
-
-  def get_tokens(self, obj):
-    user = obj.user  # Assuming CompanyProfile has a FK to User named `user`
-    valid_tokens = TokenPackage.objects.filter(
-      company=user,
-      package_balance__gt=0,
-      expires_at__gt=timezone.now()
-    ).aggregate(total=Sum('package_balance'))['total'] or 0
-    return valid_tokens
-
 class JobListSerializer(serializers.ModelSerializer):
   posted_by = serializers.SerializerMethodField()
   image = serializers.SerializerMethodField()

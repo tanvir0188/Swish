@@ -1,5 +1,6 @@
 from collections import deque
 
+from django.db.models.aggregates import Sum
 from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
@@ -12,12 +13,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from jobs.models import Job, Area, SubCategory, Favorite
-from jobs.serializers import JobSerializer
+from jobs.serializers import JobSerializer, SubCategorySerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
 from jobs.models import Job
-from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
-  SideBarInfoSerializer
+from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -228,6 +228,8 @@ class ToggleFavoriteAPIView(APIView):
 @permission_classes([IsAuthenticated])
 def filtered_all_job_list(request):
   # Filter jobs in relevant subcategories and exclude self-posted
+  if request.user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
   jobs = Job.objects.all()
   # Apply JobFilter
   job_filter = JobFilter(request.GET, queryset=jobs)
@@ -257,7 +259,8 @@ def filtered_all_job_list(request):
 @permission_classes([IsAuthenticated])
 def filtered_recommended_job_list(request):
   user = request.user
-
+  if user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
   # Step 1: Get user's subcategories
   try:
     company_profile = user.company_profile
@@ -302,6 +305,8 @@ def filtered_recommended_job_list(request):
 @permission_classes([IsAuthenticated])
 def filtered_new_job_list(request):
   user = request.user
+  if user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
 
   try:
     company_profile = user.company_profile
@@ -350,7 +355,8 @@ def filtered_new_job_list(request):
 @permission_classes([IsAuthenticated])
 def filtered_favorite_job_list(request):
   user = request.user
-
+  if user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
   try:
     company_profile = user.company_profile
     subcategories = company_profile.sub_category.all()
@@ -398,6 +404,8 @@ def filtered_favorite_job_list(request):
 @permission_classes([IsAuthenticated])
 def filtered_responded_job_list(request):
   user = request.user
+  if user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
 
   try:
     company_profile = user.company_profile
@@ -443,6 +451,8 @@ def filtered_responded_job_list(request):
 @permission_classes([IsAuthenticated])
 def filtered_won_job_list(request):
   user = request.user
+  if user.role != 'company':
+    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
 
   try:
     company_profile = user.company_profile
@@ -478,12 +488,41 @@ def filtered_won_job_list(request):
 
 class SideBarInfoAPIView(APIView):
   permission_classes = [IsAuthenticated]
+
   def get(self, request):
-    company_profile = request.user.company_profile
+    user = request.user
+
+    # Check company profile existence
+    company_profile = getattr(user, 'company_profile', None)
     if not company_profile:
       return Response({
         "error": "User does not have a company profile."
       }, status=400)
-    serializer = SideBarInfoSerializer(company_profile, context={'request': request})
-    return Response(serializer.data)
+
+    # Get all subcategories
+    sub_categories = list(SubCategory.objects.values_list('name', flat=True))
+
+    # Get all areas with job count
+    areas = []
+    for area in Area.objects.all():
+      job_count = Job.objects.filter(area=area).count()
+
+      areas.append(
+        f"{area.name} ({job_count})"
+      )
+
+    # Get total valid tokens
+    valid_tokens = TokenPackage.objects.filter(
+      company=user,
+      package_balance__gt=0,
+      expires_at__gt=timezone.now()
+    ).aggregate(total=Sum('package_balance'))['total'] or 0
+
+    # Construct and return response
+    return Response({
+      'sub_categories': sub_categories,
+      'areas': areas,
+      'tokens': valid_tokens
+    })
+
 

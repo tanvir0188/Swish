@@ -31,10 +31,11 @@ class JobListSerializer(serializers.ModelSerializer):
   description = serializers.SerializerMethodField()
   bids = serializers.SerializerMethodField()
   is_favorite=serializers.SerializerMethodField()
+  is_unlocked= serializers.SerializerMethodField()
 
   class Meta:
     model = Job
-    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids', 'is_favorite']
+    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids', 'is_favorite', 'is_unlocked']
 
   def get_posted_by(self, obj):
     return f"{obj.first_name} {obj.surname}"
@@ -57,7 +58,58 @@ class JobListSerializer(serializers.ModelSerializer):
       return Favorite.objects.filter(user=user.id, job=obj).exists()
     return False
 
-# class JobDescriptionSerializer(serializers.ModelSerializer):
-#   class Meta:
-#     model = Job
+  def get_is_unlocked(self, obj):
+    request = self.context.get('request')
+    user = request.user if request else None
+
+    if user and user.is_authenticated:
+      return TokenTransaction.objects.filter(job=obj, used_by=user).exists()
+    return False
+
+class JobDescriptionSerializer(serializers.ModelSerializer):
+  project_value=serializers.SerializerMethodField()
+  contact= serializers.SerializerMethodField()
+  property_type= serializers.SerializerMethodField()
+  property_pictures=serializers.SerializerMethodField()
+  scale = serializers.SerializerMethodField()
+  is_unlocked=serializers.SerializerMethodField()
+  is_favorite=serializers.SerializerMethodField()
+  class Meta:
+    model = Job
+    fields = ['posted_by', 'heading', 'description', 'created_at', 'project_value', 'mission_address', 'employee_need','contact', 'property_type', 'scale', 'property_pictures', 'is_favorite', 'is_unlocked']
+
+  def get_contact(self, obj):
+    return obj.telephone
+  def get_property_type(self, obj):
+    return obj.category.name
+
+  def get_is_favorite(self, obj):
+    request = self.context.get('request')
+    user = request.user if request else None
+
+    if user and user.is_authenticated:
+      return Favorite.objects.filter(user=user.id, job=obj).exists()
+    return False
+
+  def get_project_value(self, obj):
+    return obj.value
+
+  def get_contact(self, obj):
+    return obj.telephone_number
+  def get_scale(self, obj):
+    return obj.scale
+  def get_property_pictures(self, obj):
+    request = self.context.get('request')
+    return [
+      request.build_absolute_uri(image.image.url)
+      for image in obj.images.all()
+    ]
+
+  def get_is_unlocked(self, obj):
+    request = self.context.get('request')
+    user = request.user if request else None
+
+    if user and user.is_authenticated:
+      return TokenTransaction.objects.filter(job=obj, used_by=user).exists()
+    return False
 

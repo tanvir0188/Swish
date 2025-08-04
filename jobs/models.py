@@ -48,7 +48,11 @@ JOB_STATUS_CHOICES = [
     ('Completed', 'Completed'),
     ('Paused', 'Paused'),
 ]
-
+JOB_SCALE_CHOICES = [
+  ('Small', 'Small'),
+  ('Regular', 'Regular'),
+  ('Large', 'Large'),
+]
 
 class Job(models.Model):
   posted_by = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
@@ -60,6 +64,7 @@ class Job(models.Model):
   value = models.FloatField(blank=True, null=True)
   category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='jobs')
   custom_category = models.ForeignKey(CustomCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
+  scale = models.CharField(max_length=10, choices=JOB_SCALE_CHOICES, null=True, blank=True)
   email = models.EmailField(blank=False, null=False)
   first_name = models.CharField(max_length=100, blank=False, null=False)
   surname = models.CharField(max_length=100, blank=False, null=False)
@@ -82,6 +87,7 @@ class Job(models.Model):
   class Meta:
     ordering = ['created_at']
     verbose_name_plural = 'jobs'
+
 
 class SiteImage(models.Model):
   job=models.ForeignKey('Job', on_delete=models.CASCADE, related_name='images')

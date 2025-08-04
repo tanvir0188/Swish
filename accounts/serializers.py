@@ -18,27 +18,27 @@ class CreateUserSerializer(serializers.ModelSerializer):
       'telephone': {'required': False, 'allow_null': True, 'allow_blank': True}
     }
 
-  def validate_password(self, password):
-    if len(password) < 8:
-      raise serializers.ValidationError("Password must be at least 6 characters long.")
-    if not re.search(r'[A-Z]', password):
-      raise serializers.ValidationError("Password must contain at least one uppercase letter.")
-    if not re.search(r'[a-z]', password):
-      raise serializers.ValidationError("Password must contain at least one lowercase letter.")
-    if not re.search(r'\d', password):
-      raise serializers.ValidationError("Password must contain at least one digit.")
-    return password
-
-  def validate_first_name(self, first_name):
-    if first_name:
-      if not re.match(r'^[A-Za-z ]+$', first_name):
-        raise serializers.ValidationError("Full name can only contain letters and spaces.")
-    return first_name
-  def validate_last_name(self, last_name):
-    if last_name:
-      if not re.match(r'^[A-Za-z ]+$', last_name):
-        raise serializers.ValidationError("Full name can only contain letters and spaces.")
-    return last_name
+  # def validate_password(self, password):
+  #   if len(password) < 8:
+  #     raise serializers.ValidationError("Password must be at least 6 characters long.")
+  #   if not re.search(r'[A-Z]', password):
+  #     raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+  #   if not re.search(r'[a-z]', password):
+  #     raise serializers.ValidationError("Password must contain at least one lowercase letter.")
+  #   if not re.search(r'\d', password):
+  #     raise serializers.ValidationError("Password must contain at least one digit.")
+  #   return password
+  #
+  # def validate_first_name(self, first_name):
+  #   if first_name:
+  #     if not re.match(r'^[A-Za-z ]+$', first_name):
+  #       raise serializers.ValidationError("Full name can only contain letters and spaces.")
+  #   return first_name
+  # def validate_last_name(self, last_name):
+  #   if last_name:
+  #     if not re.match(r'^[A-Za-z ]+$', last_name):
+  #       raise serializers.ValidationError("Full name can only contain letters and spaces.")
+  #   return last_name
 
   def create(self, validated_data):
     password = validated_data.pop('password')

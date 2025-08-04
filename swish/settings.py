@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-_fxcmxqehq047c^6^mbu$e$3n#skx*$+pc761^wzj6npqlw=v9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['10.10.13.59']
 
 
 # Application definition
@@ -108,7 +108,12 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,  # Optional default fallback
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+  "http://localhost:7890",
+]
+CORS_ALLOW_CREDENTIALS = True
+
 
 
 SPECTACULAR_SETTINGS = {

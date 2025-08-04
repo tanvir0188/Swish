@@ -68,6 +68,31 @@ class UnlockJobAPIView(APIView):
         'details': str(e)
       }, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from .models import Job
+from .serializers import JobDescriptionSerializer
+
+class JobDetailAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request, pk):
+    try:
+      job = Job.objects.get(pk=pk)
+      serializer = JobDescriptionSerializer(job, context={'request': request})
+      if not serializer.data.get('is_unlocked'):
+        return Response({
+          'error': 'You have to unlock the job first',
+        }, status=status.HTTP_403_FORBIDDEN)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except Job.DoesNotExist:
+      return Response({'detail': 'Job not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+      return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CompanyRegisterAPIView(APIView):
   permission_classes = [IsAuthenticated]
   @extend_schema(request=CompanyProfileSerializer, responses={

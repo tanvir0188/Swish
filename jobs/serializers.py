@@ -1,8 +1,6 @@
 from rest_framework import serializers, fields
-
 from jobs.models import Job, Category, SubCategory, Review, JobPauseReason, REASON_CHOICES, SiteImage
 from service_provider.models import Bid
-
 
 class JobSerializer(serializers.ModelSerializer):
   site_images = serializers.ListField(
@@ -30,7 +28,6 @@ class JobSerializer(serializers.ModelSerializer):
       SiteImage.objects.create(job=job, image=image)
 
     return job
-
 
 class SitePhotoSerializer(serializers.ModelSerializer):
   class Meta:

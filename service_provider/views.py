@@ -1,15 +1,11 @@
 from collections import deque
-
 from django.db.models.aggregates import Sum
-from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
-from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from jobs.models import Job, Area, SubCategory, Favorite
@@ -96,29 +92,55 @@ class JobDetailAPIView(APIView):
 
 class CompanyRegisterAPIView(APIView):
   permission_classes = [IsAuthenticated]
-  @extend_schema(request=CompanyProfileSerializer, responses={
-    200:'Ok', 400: 'Validation error'
-  })
+
+  @extend_schema(
+    request=CompanyProfileSerializer,
+    responses={200: CompanyProfileSerializer, 400: 'Validation error'}
+  )
   def post(self, request):
     user = request.user
-    try:
-      company_profile = CompanyProfile.objects.get(user=user)
-
+    if hasattr(user, 'company_profile'):
       return Response({
-        'message': f'Already registered a company using {company_profile.user.email}.',
+        'message': f'Already registered a company using {user.email}.',
       }, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = CompanyProfileSerializer(data=request.data)
+    if serializer.is_valid():
+      serializer.save(user=user)
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  @extend_schema(
+    request=CompanyProfileSerializer,
+    responses={200: CompanyProfileSerializer, 404: 'Not found', 400: 'Validation error'}
+  )
+  def patch(self, request):
+    user = request.user
+    try:
+      company_profile = user.company_profile
     except CompanyProfile.DoesNotExist:
-      serializer = CompanyProfileSerializer(data=request.data)
-      try:
-        if serializer.is_valid():
-          serializer.save(user = user)
-          return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-      except Exception as e:
-        return Response({
-          'error': 'Something went wrong while registering the company.',
-          'details': str(e)
-        }, status=status.HTTP_502_BAD_GATEWAY)
+      return Response({'error': 'Company profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CompanyProfileSerializer(company_profile, data=request.data, partial=True)
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  @extend_schema(
+    responses={200: CompanyProfileSerializer, 404: 'Not found'}
+  )
+  def get(self, request):
+    user = request.user
+    try:
+      company_profile = user.company_profile
+      serializer = CompanyProfileSerializer(company_profile)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except CompanyProfile.DoesNotExist:
+      return Response({'error': 'Company profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
 @extend_schema(
   methods=["PATCH"],
   summary="Add work area to company profile",
@@ -141,7 +163,6 @@ class CompanyRegisterAPIView(APIView):
     403: OpenApiResponse(description="Forbidden – only company users can add areas.")
   }
 )
-
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def add_area(request):

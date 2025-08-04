@@ -15,10 +15,49 @@ def generate_password(length=10):
 def generate_otp():
   return ''.join(random.choices(string.digits, k=4))
 
+class SubCategorySerializer(serializers.ModelSerializer):
+  class Meta:
+    model = SubCategory
+    fields = ['id', 'name']
+
+class AreaSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Area
+    fields = ['id', 'name']
+
 class CompanyProfileSerializer(serializers.ModelSerializer):
+  # For writing (accepting IDs)
+  sub_category = serializers.PrimaryKeyRelatedField(
+    many=True,
+    queryset=SubCategory.objects.all(),
+    write_only=True
+  )
+  # For reading (returning objects)
+  sub_category_data = SubCategorySerializer(source='sub_category', many=True, read_only=True)
+  area = serializers.PrimaryKeyRelatedField(
+    many=True,
+    queryset=Area.objects.all(),
+    write_only=True
+  )
+  area_data = SubCategorySerializer(source='sub_category', many=True, read_only=True)
   class Meta:
     model = CompanyProfile
-    fields=['company_name', 'phone_number', 'ice_number', 'address', 'city', 'about','business_email','sub_category', 'facebook', 'instagram', 'youtube', 'tiktok', 'homepage', 'monday_time', 'tuesday_time','wednesday_time','thursday_time', 'friday_time', 'saturday_time','sunday_time', 'open_in_weekend']
+    fields = [
+      'company_name', 'phone_number', 'ice_number', 'address', 'city', 'about',
+      'business_email', 'sub_category', 'sub_category_data','area', 'area_data', 'logo', 'wallpaper',
+      'facebook', 'instagram', 'youtube', 'tiktok', 'homepage',
+      'monday_time', 'tuesday_time', 'wednesday_time', 'thursday_time',
+      'friday_time', 'saturday_time', 'sunday_time', 'open_in_weekend'
+    ]
+
+  def to_representation(self, instance):
+    data = super().to_representation(instance)
+    # Replace the write-only sub_category field with the readable one
+    data['sub_category'] = data.pop('sub_category_data')
+    data['area'] = data.pop('area_data')
+    return data
+
+
 
 class AddFavoriteSerializer(serializers.ModelSerializer):
   class Meta:

@@ -57,7 +57,7 @@ class Bid(models.Model):
   amount = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False)
   time_estimate=models.CharField(max_length=100,blank=False, null=False)
   proposal_description=models.TextField(blank=False, null=False, max_length=500)
-  status=models.CharField(max_length=10, choices=BID_STATUS_CHOICES, null=True, blank=True)
+  status=models.CharField(max_length=10, choices=BID_STATUS_CHOICES, null=True, blank=True, default='Active')
   created_at=models.DateTimeField(auto_now_add=True)
   updated_at=models.DateTimeField(auto_now=True)
   def __str__(self):

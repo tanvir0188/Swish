@@ -17,7 +17,8 @@ from jobs.serializers import JobSerializer, SubCategorySerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
 from jobs.models import Job
-from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer
+from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
+  BiddingSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -510,7 +511,6 @@ def filtered_won_job_list(request):
   serializer = JobListSerializer(result_page, many=True, context={'request': request})
   return paginator.get_paginated_response(serializer.data)
 
-
 class SideBarInfoAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
@@ -549,5 +549,68 @@ class SideBarInfoAPIView(APIView):
       'areas': areas,
       'tokens': valid_tokens
     })
+
+class CompanyBiddingAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  @extend_schema(
+    request=BiddingSerializer,
+    responses=BiddingSerializer
+  )
+  def post(self, request, pk):
+    bidding_company = request.user
+    job =Job.objects.get(pk=pk)
+    if Bid.objects.filter(bidding_company=bidding_company, job=job).exists():
+      return Response({
+        "error": "You already have bid for this job."
+      }, status=400)
+    serializer = BiddingSerializer(data=request.data)
+    is_unlocked = TokenTransaction.objects.filter(job=job, used_by=bidding_company).exists()
+
+    if serializer.is_valid():
+      if not is_unlocked:
+        return Response({'message': "You have not unlocked this job yet"}, status=status.HTTP_403_FORBIDDEN)
+      serializer.save(job=job, bidding_company=bidding_company)
+      return Response({
+        "data":serializer.data,
+        "message": f"Bid submitted for '{job.heading}'"
+      }, status=status.HTTP_201_CREATED)
+    return Response({
+      "error": serializer.errors,
+      "message": 'Something went wrong.',
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+  @extend_schema(
+    request=BiddingSerializer,
+    responses=BiddingSerializer
+  )
+  def patch(self, request, pk):
+    bidding_company = request.user
+    try:
+      job = Job.objects.get(pk=pk)
+    except Job.DoesNotExist:
+      return Response({"error": "Job not found."}, status=404)
+
+    try:
+      bid = Bid.objects.get(job=job, bidding_company=bidding_company)
+    except Bid.DoesNotExist:
+      return Response({"error": "You don't have a bid for this job."}, status=404)
+
+    serializer = BiddingSerializer(bid, data=request.data, partial=True)
+    if serializer.is_valid():
+      serializer.save()
+      return Response({
+        "data": {
+          "time_estimate": serializer.data['time_estimate'],
+          "proposal_description": serializer.data['proposal_description'],
+          "price": serializer.data['price']
+
+        },
+        "message": f"Updated the bid for {job.heading}"
+      }, status=status.HTTP_200_OK)
+
+    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 

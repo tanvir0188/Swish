@@ -108,6 +108,37 @@ def forget_password_otp(request):
     'status': 'success'
   }, status=200)
 
+@extend_schema(
+  request= EmailSerializer,
+  responses={200: None, 400: 'Validation error'}
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def email_verification_otp(request):
+  serializer = EmailSerializer(data=request.data)
+  if not serializer.is_valid():
+    return Response(serializer.errors, status=400)
+
+  email = serializer.validated_data['email']
+
+  try:
+    user = User.objects.get(email=email)
+  except User.DoesNotExist:
+    return Response({'error': 'User not found'}, status=404)
+
+  otp = random.randint(1000, 9999)
+  user.otp = otp
+  user.otp_expires = timezone.now() + timedelta(minutes=1)
+  user.save()
+
+  send_otp_for_password(user.email, otp)
+
+  return Response({
+    'message': 'OTP sent successfully.',
+    'status': 'success'
+  }, status=200)
+
+
 class VerifyOTPView(APIView):
   @extend_schema(
     request=OTPSerializer,
@@ -220,7 +251,6 @@ class ChangeRoleApiView(APIView):
       return Response({'message': f'Role updated to {user.role}'}, status=200)
 
     return Response(serializer.errors, status=400)
-
 
 class MyTokenObtainPairView(TokenObtainPairView):
   serializer_class = MyTokenObtainPairSerializer

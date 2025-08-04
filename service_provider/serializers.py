@@ -32,10 +32,11 @@ class JobListSerializer(serializers.ModelSerializer):
   bids = serializers.SerializerMethodField()
   is_favorite=serializers.SerializerMethodField()
   is_unlocked= serializers.SerializerMethodField()
+  bid_status = serializers.SerializerMethodField()
 
   class Meta:
     model = Job
-    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids', 'is_favorite', 'is_unlocked']
+    fields = ['id', 'posted_by', 'image', 'heading','value', 'mission_address', 'created_at', 'description', 'bids', 'is_favorite', 'is_unlocked', 'bid_status']
 
   def get_posted_by(self, obj):
     return f"{obj.first_name} {obj.surname}"
@@ -64,6 +65,12 @@ class JobListSerializer(serializers.ModelSerializer):
 
     if user and user.is_authenticated:
       return TokenTransaction.objects.filter(job=obj, used_by=user).exists()
+    return False
+  def get_bid_status(self, obj):
+    request = self.context.get('request')
+    user = request.user if request else None
+    if user and user.is_authenticated:
+      return Bid.objects.filter(job=obj, bidding_company=user).exists()
     return False
 
 class JobDescriptionSerializer(serializers.ModelSerializer):
@@ -112,4 +119,29 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
     if user and user.is_authenticated:
       return TokenTransaction.objects.filter(job=obj, used_by=user).exists()
     return False
+
+class BiddingSerializer(serializers.ModelSerializer):
+  price = serializers.FloatField(write_only=True)
+  job = serializers.Serializer(read_only=True)
+  bidding_company = serializers.Serializer(read_only=True)
+
+  class Meta:
+    model = Bid
+    fields = ['job', 'bidding_company', 'price', 'time_estimate', 'proposal_description']
+
+  def create(self, validated_data):
+    price = validated_data.pop('price')
+    validated_data['amount'] = price
+    return super().create(validated_data)
+
+  def update(self, instance, validated_data):
+    price = validated_data.pop('price', None)
+    if price is not None:
+      instance.amount = price
+    return super().update(instance, validated_data)
+
+  def to_representation(self, instance):
+    data = super().to_representation(instance)
+    data['price'] = instance.amount
+    return data
 

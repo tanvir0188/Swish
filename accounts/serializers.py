@@ -54,7 +54,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class OTPSerializer(serializers.Serializer):
   email = serializers.EmailField()
-  otp = serializers.CharField(max_length=4)
+  otp = serializers.CharField(max_length=4  )
 
 class EmailSerializer(serializers.Serializer):
   email = serializers.EmailField()
@@ -110,6 +110,20 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
   def get_token(cls, user):
     token = MyRefreshToken.for_user(user)
     return token
+
+  def validate(self, attrs):
+    data = super().validate(attrs)
+
+    # Add custom login_user_info
+    user = self.user
+    data['login_user_info'] = {
+      'first_name': user.first_name,
+      'surname': user.surname,
+      'telephone': user.telephone,
+      'email':user.email
+    }
+    return data
+
 
 class MyRefreshToken(RefreshToken):
   @classmethod

@@ -208,26 +208,38 @@ class ReviewAPIView(APIView):
 
   @extend_schema(
     request=ReviewSerializer,
-    responses={200: None, 400: 'Validation error'}
+    responses={201: None, 400: 'Validation error'}
   )
   def post(self, request, pk):
     try:
       service_provider = User.objects.get(id=pk)
-      if service_provider.role != 'company':
-        return Response({'error': 'Only users with company role can receive reviews.'},
-                        status=status.HTTP_400_BAD_REQUEST)
     except User.DoesNotExist:
       return Response({'error': 'Service provider not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.user.role != 'private':
-      return Response({'error': 'Only private users can post reviews.'}, status=status.HTTP_403_FORBIDDEN)
+    if request.user.role == 'company':
+      return Response({
+        'error':'Change your role to private'
+      }, status=status.HTTP_403_FORBIDDEN)
 
+    # Check for completed job
+    completed_bid_exists = Bid.objects.filter(
+      bidding_company=request.user,
+      status='complete',
+      job__status='Completed',
+      job__posted_by=service_provider
+    ).exists()
+
+    if not completed_bid_exists:
+      return Response({'error': 'You can only review users you have completed jobs with.'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Save review
     serializer = ReviewSerializer(data=request.data)
     if serializer.is_valid():
       serializer.save(user=request.user, service_provider=service_provider)
       return Response({'message': 'Review posted successfully.'}, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class JobPausingReasonAPIView(APIView):
   permission_classes = [IsAuthenticated]

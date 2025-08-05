@@ -9,10 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from jobs.models import Job, Area, SubCategory, Favorite
-from jobs.serializers import JobSerializer, SubCategorySerializer
+from jobs.serializers import ReviewSerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
-from jobs.models import Job
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
   BiddingSerializer
 
@@ -89,8 +88,58 @@ class JobDetailAPIView(APIView):
     except Exception as e:
       return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class EditSubCategoryAPIView(APIView):
+  permission_classes = [IsAuthenticated]
 
-class CompanyRegisterAPIView(APIView):
+  @extend_schema(
+    request={
+      "application/json": {
+        "type": "object",
+        "properties": {
+          "sub_category": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "List of SubCategory IDs"
+          }
+        },
+        "example": {
+          "sub_category": [2, 5, 9]
+        }
+      }
+    },
+    responses={
+      200: OpenApiTypes.OBJECT,
+      400: OpenApiTypes.OBJECT,
+      404: OpenApiTypes.OBJECT
+    },
+    description="Patch company profile's sub_category field by sending a list of SubCategory IDs."
+  )
+
+  def patch(self, request):
+    try:
+      company_profile = request.user.company_profile
+    except CompanyProfile.DoesNotExist:
+      return Response({'error': 'Company profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    subcategory_ids = request.data.get('sub_category')
+
+    if not isinstance(subcategory_ids, list):
+      return Response({'error': 'sub_category must be a list of IDs'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validate SubCategory IDs
+    valid_subcategories = SubCategory.objects.filter(id__in=subcategory_ids)
+    if valid_subcategories.count() != len(subcategory_ids):
+      return Response({'error': 'Some SubCategory IDs are invalid'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Update sub_category field
+    company_profile.sub_category.set(valid_subcategories)
+    company_profile.save()
+
+    return Response({'message': 'Sub categories updated successfully'}, status=status.HTTP_200_OK)
+
+class CompanyProfileAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
   @extend_schema(
@@ -115,20 +164,6 @@ class CompanyRegisterAPIView(APIView):
     request=CompanyProfileSerializer,
     responses={200: CompanyProfileSerializer, 404: 'Not found', 400: 'Validation error'}
   )
-  def patch(self, request):
-    user = request.user
-    try:
-      company_profile = user.company_profile
-    except CompanyProfile.DoesNotExist:
-      return Response({'error': 'Company profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = CompanyProfileSerializer(company_profile, data=request.data, partial=True)
-    if serializer.is_valid():
-      serializer.save()
-      return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
   @extend_schema(
     responses={200: CompanyProfileSerializer, 404: 'Not found'}
   )
@@ -140,6 +175,69 @@ class CompanyRegisterAPIView(APIView):
       return Response(serializer.data, status=status.HTTP_200_OK)
     except CompanyProfile.DoesNotExist:
       return Response({'error': 'Company profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+@extend_schema(
+  methods=["PATCH"],
+    request={
+      "application/json": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "example": "string"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "telephone": {
+            "type": "string",
+            "example": "string"
+          },
+          "location": {
+            "type": "string",
+            "example": "example"
+          }
+        }
+      }
+    },
+    responses={
+    200: OpenApiResponse(description="Profile updated successfully")
+
+  }
+)
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+@extend_schema()
+def patch_company_profile(request):
+  user = request.user
+  if user.role == 'company':
+    company_profile = user.company_profile
+    company_name = request.data.get('company_name')
+    email = request.data.get('email')
+    telephone = request.data.get('telephone')
+    location = request.data.get('location')
+    try:
+      company_profile.company_name = company_name
+      company_profile.business_email = email
+      company_profile.phone_number = telephone
+      company_profile.address = location
+      company_profile.save()
+      return Response({
+        'message': 'Company profile updated successfully',
+        'data':{
+          'company_name': company_name,
+          'email': email,
+          'telephone': telephone,
+          'location': location,
+        }
+      }, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+  return Response({
+    'error': 'Change your role to company first',
+  }, status=status.HTTP_403_FORBIDDEN)
+
 
 @extend_schema(
   methods=["PATCH"],
@@ -259,37 +357,6 @@ class ToggleFavoriteAPIView(APIView):
         Favorite.objects.create(user=user, job=job)
         return Response({'message': 'Added to favorites'}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@extend_schema(
-  parameters=[
-    OpenApiParameter(name='min_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Minimum job value'),
-    OpenApiParameter(name='max_value', type=OpenApiTypes.FLOAT, location=OpenApiParameter.QUERY, required=False, description='Maximum job value'),
-    OpenApiParameter(name='subcategory', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by subcategory name'),
-    OpenApiParameter(name='area', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Filter by area name'),
-    OpenApiParameter(name='search', type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, required=False, description='Search by Job heading'),
-    OpenApiParameter(name='page', type=OpenApiTypes.INT, location=OpenApiParameter.QUERY, required=False, description='Page number for pagination')
-  ],
-  responses=JobListSerializer(many=True)
-)
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def filtered_all_job_list(request):
-  # Filter jobs in relevant subcategories and exclude self-posted
-  if request.user.role != 'company':
-    return Response({'message':'Change your role to Company'},status=status.HTTP_403_FORBIDDEN)
-  jobs = Job.objects.all()
-  # Apply JobFilter
-  job_filter = JobFilter(request.GET, queryset=jobs)
-
-  # Apply distinct here to avoid duplicates from joins
-  filtered_jobs = job_filter.qs.distinct().order_by('-created_at')
-  # Paginate
-  paginator = PageNumberPagination()
-  paginator.page_size = 6
-  result_page = paginator.paginate_queryset(filtered_jobs, request)
-  # Serialize
-  serializer = JobListSerializer(result_page, many=True, context={'request': request})
-  return paginator.get_paginated_response(serializer.data)
 
 @extend_schema(
   parameters=[
@@ -467,7 +534,12 @@ class CompanyBiddingAPIView(APIView):
 
     return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
+# class ReviewAPIView(APIView):
+#   permission_classes = [IsAuthenticated]
+#   @extend_schema(
+#     request=ReviewSerializer,
+#     responses=ReviewSerializer
+#   )
 
 
 

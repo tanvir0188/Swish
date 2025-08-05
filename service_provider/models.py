@@ -66,7 +66,8 @@ class Bid(models.Model):
     unique_together=('job', 'bidding_company')
 
 class Employee(models.Model):
-  name=models.CharField(max_length=255, blank=False, null=False)
+  first_name=models.CharField(max_length=255, blank=False, null=False)
+  last_name = models.CharField(max_length=255, blank=False, null=False)
   designation=models.CharField(max_length=255, blank=False, null=False)
   image=models.ImageField(upload_to='uploads/employee_images', null=True, blank=True)
   company=models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)

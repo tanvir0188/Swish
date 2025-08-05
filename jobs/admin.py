@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from jobs.models import Category, Job, SubCategory, JobPauseReason, Area, SiteImage
+from jobs.models import Category, Job, SubCategory, JobPauseReason, Area, SiteImage, Review
 
 # Register your models here.
 admin.site.register(Category)
@@ -12,3 +12,4 @@ admin.site.register(SiteImage)
 admin.site.register(Job, JobAdmin)
 admin.site.register(JobPauseReason)
 admin.site.register(Area)
+admin.site.register(Review)

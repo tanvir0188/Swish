@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from service_provider.models import TokenTransaction, CompanyProfile, Bid, TokenPackage
-from jobs.models import Job, SubCategory, Favorite, Area
+from jobs.models import Job, SubCategory, Favorite, Area, Review
 import random
 import string
 from django.utils.crypto import get_random_string
@@ -57,7 +57,10 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
     data['area'] = data.pop('area_data')
     return data
 
-
+class ReviewListSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Review
+    fields = ['id', 'name']
 
 class AddFavoriteSerializer(serializers.ModelSerializer):
   class Meta:
@@ -143,7 +146,7 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
   def get_contact(self, obj):
     return obj.telephone_number
   def get_size(self, obj):
-    return obj.scale
+    return obj.size
   def get_property_pictures(self, obj):
     request = self.context.get('request')
     return [

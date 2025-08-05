@@ -104,7 +104,13 @@ class Area(models.Model):
   class Meta:
     ordering=['name']
     verbose_name_plural='Areas'
-
+RATING_CHOICES=[
+  (1,1),
+  (2,2),
+  (3,3),
+  (4,4),
+  (5,5),
+]
 class Review(models.Model):
   service_provider = models.ForeignKey(
     'accounts.User',
@@ -118,7 +124,9 @@ class Review(models.Model):
     related_name='reviews_given'  # Private user gives review
   )
   review = models.TextField(blank=False, null=False)
-  rating = models.FloatField(blank=False, null=False)
+  rating = models.IntegerField(choices=RATING_CHOICES, blank=False, null=False)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
 
   def __str__(self):
     return f"Review for {self.service_provider.email} by {self.user.email}"

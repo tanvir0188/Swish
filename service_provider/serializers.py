@@ -117,12 +117,12 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
   contact= serializers.SerializerMethodField()
   property_type= serializers.SerializerMethodField()
   property_pictures=serializers.SerializerMethodField()
-  scale = serializers.SerializerMethodField()
+  size = serializers.SerializerMethodField()
   is_unlocked=serializers.SerializerMethodField()
   is_favorite=serializers.SerializerMethodField()
   class Meta:
     model = Job
-    fields = ['posted_by', 'heading', 'description', 'created_at', 'project_value', 'mission_address', 'employee_need','contact', 'property_type', 'scale', 'property_pictures', 'is_favorite', 'is_unlocked']
+    fields = ['posted_by', 'heading', 'description', 'created_at', 'project_value', 'mission_address', 'employee_need','contact', 'property_type', 'size', 'property_pictures', 'is_favorite', 'is_unlocked']
 
   def get_contact(self, obj):
     return obj.telephone
@@ -142,7 +142,7 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
 
   def get_contact(self, obj):
     return obj.telephone_number
-  def get_scale(self, obj):
+  def get_size(self, obj):
     return obj.scale
   def get_property_pictures(self, obj):
     request = self.context.get('request')

@@ -88,6 +88,7 @@ PACKAGE_CHOICES = [
 ]
 
 class TokenPackage(models.Model):
+
   company=models.ForeignKey(User, on_delete=models.CASCADE)
   is_paid=models.BooleanField(default=True)
   package_name=models.CharField(choices=PACKAGE_CHOICES, blank=False, null=False)
@@ -117,8 +118,6 @@ class TokenPackage(models.Model):
     super().save(*args, **kwargs)
   def __str__(self):
     return self.package_name
-
-
 #Token transaction is actually the token
 class TokenTransaction(models.Model):
   package=models.ForeignKey(TokenPackage, on_delete=models.CASCADE)
@@ -132,4 +131,9 @@ class TokenTransaction(models.Model):
   class Meta:
     unique_together=('job', 'used_by')
 
+# class Certification(models.Model):
+#   company=models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+#   certifications=models.FileField(upload_to='uploads/certification', null=True, blank=True)
+#   def __str__(self):
+#     re
 

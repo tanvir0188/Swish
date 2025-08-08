@@ -61,6 +61,9 @@ class User(AbstractUser):
   def __str__(self):
     return f'{self.first_name} {self.surname}'
 
+  def save(self, *args, **kwargs):
+    self.full_name = f'{self.first_name or ""} {self.surname or ""}'.strip()
+    super().save(*args, **kwargs)
 
   class Meta:
     verbose_name = 'User'

@@ -1,10 +1,6 @@
-from django.db.models import Sum
-from django.utils import timezone
 from rest_framework import serializers
-
-from accounts.models import User
 from service_provider.models import TokenTransaction, CompanyProfile, Bid, TokenPackage, Employee
-from jobs.models import Job, SubCategory, Favorite, Area, Review
+from jobs.models import Job, SubCategory, Favorite, Area
 import random
 import string
 from django.utils.crypto import get_random_string
@@ -56,11 +52,6 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
     data['sub_category'] = data.pop('sub_category_data')
     data['area'] = data.pop('area_data')
     return data
-
-class ReviewListSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Review
-    fields = ['id', 'name']
 
 class AddFavoriteSerializer(serializers.ModelSerializer):
   class Meta:

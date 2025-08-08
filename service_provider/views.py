@@ -1,21 +1,25 @@
-from collections import deque, defaultdict
+from collections import defaultdict
+from urllib.parse import urlencode
+from django.core.paginator import Paginator, EmptyPage
+from django.db.models import Count, Avg, Q
 from django.db.models.aggregates import Sum
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-
-from jobs.models import Job, Area, SubCategory, Favorite
-from jobs.serializers import ReviewSerializer
+from jobs.models import Job, Area, SubCategory, Favorite, Review
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid, Employee
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
   BiddingSerializer, CompanyProfileDetailSerializer, SubCategorySerializer, CompanyLogoWallpaperSerializer, \
   EmployeeListSerializer, EmployeeSerializer
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from .models import Job
+from .serializers import JobDescriptionSerializer
 
 class UnlockJobAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -61,16 +65,9 @@ class UnlockJobAPIView(APIView):
 
     except Exception as e:
       return Response({
-        'error': 'Something went wrong while unlocking the job.',
+        'error': 'You may have already unlocked this job',
         'details': str(e)
       }, status=status.HTTP_400_BAD_REQUEST)
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from .models import Job
-from .serializers import JobDescriptionSerializer
 
 class JobDetailAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -621,7 +618,6 @@ class EmployeeListAPIView(APIView):
       return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
     return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class EmployeeDetailAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
@@ -655,14 +651,83 @@ class EmployeeDetailAPIView(APIView):
         "error": str(e),
       }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_review_list(request):
+  try:
+    sort_by = request.GET.get('sort_by', 'created_at')
+    order = request.GET.get('order', 'desc')
+    page = int(request.GET.get('page', 1))
 
+    if sort_by not in ['created_at', 'rating']:
+      return Response({"error": "Invalid sort_by. Use 'created_at' or 'rating'."}, status=400)
+    if order not in ['asc', 'desc']:
+      return Response({"error": "Invalid order. Use 'asc' or 'desc'."}, status=400)
 
-# class ReviewAPIView(APIView):
-#   permission_classes = [IsAuthenticated]
-#   @extend_schema(
-#     request=ReviewSerializer,
-#     responses=ReviewSerializer
-#   )
+    ordering = sort_by if order == 'asc' else f'-{sort_by}'
+
+    reviews = Review.objects.select_related('user').filter(service_provider=request.user).order_by(ordering)
+
+    # Pagination: 10 items per page
+    paginator = Paginator(reviews, 10)
+    try:
+      current_page = paginator.page(page)
+    except EmptyPage:
+      return Response({"error": "Page number out of range."}, status=404)
+
+    review_data = [
+      {
+        'image': review.user.image.url if review.user and review.user.image else None,
+        'name': review.user.full_name or f"{review.user.first_name} {review.user.surname}" if review.user else "Deleted User",
+        'posted_at': review.created_at,
+        'review': review.review,
+        'rating': review.rating
+      }
+      for review in current_page
+    ]
+
+    # Global stats (not paginated)
+    aggregate_data = reviews.aggregate(
+      avg_rating=Avg('rating'),
+      count_1=Count('id', filter=Q(rating=1)),
+      count_2=Count('id', filter=Q(rating=2)),
+      count_3=Count('id', filter=Q(rating=3)),
+      count_4=Count('id', filter=Q(rating=4)),
+      count_5=Count('id', filter=Q(rating=5)),
+    )
+
+    review_stat = {
+      "1": aggregate_data['count_1'],
+      "2": aggregate_data['count_2'],
+      "3": aggregate_data['count_3'],
+      "4": aggregate_data['count_4'],
+      "5": aggregate_data['count_5'],
+    }
+
+    # Build full URLs for next and previous page
+    base_url = request.build_absolute_uri(request.path)
+    query_params = request.GET.copy()
+
+    def build_page_link(page_number):
+      query_params['page'] = page_number
+      return f"{base_url}?{urlencode(query_params)}"
+
+    next_page_url = build_page_link(current_page.next_page_number()) if current_page.has_next() else None
+    prev_page_url = build_page_link(current_page.previous_page_number()) if current_page.has_previous() else None
+
+    return Response({
+      "data": review_data,
+      "review_count": paginator.count,
+      "current_page": page,
+      "total_pages": paginator.num_pages,
+      "next_page": next_page_url,
+      "previous_page": prev_page_url,
+      "average": round(aggregate_data["avg_rating"] or 0, 2),
+      "review_stat": review_stat
+    }, status=status.HTTP_200_OK)
+
+  except Exception as e:
+    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

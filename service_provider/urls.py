@@ -3,7 +3,7 @@ from django.urls import path
 from service_provider.views import UnlockJobAPIView, CompanyProfileAPIView, add_area, add_work_type, \
 	ToggleFavoriteAPIView, SideBarInfoAPIView, filtered_job_list, JobDetailAPIView, CompanyBiddingAPIView, \
 	EditSubCategoryAPIView, patch_company_profile, CompanyProfileDetailAPIView, get_company_cat_and_sub_cat, \
-	CompanyLogoAndWallpaperAPIView, EmployeeApiView, EmployeeDetailAPIView, EmployeeListAPIView
+	CompanyLogoAndWallpaperAPIView, EmployeeApiView, EmployeeDetailAPIView, EmployeeListAPIView, get_review_list
 
 urlpatterns = [
 	path('job-unlock/<int:pk>',UnlockJobAPIView.as_view(), name='job-unlock' ),
@@ -23,5 +23,6 @@ urlpatterns = [
 	path('employee-list', EmployeeApiView.as_view(), name='employee-list' ),
 	path('employees/', EmployeeListAPIView.as_view(), name='employee-list-create'),
 	path('employees/<int:pk>/', EmployeeDetailAPIView.as_view(), name='employee-detail'),
+	path('reviews/', get_review_list, name='reviews' ),
 	# path('company-registration',CompanyRegisterAPIView.as_view(), name='company-registration' )\
 ]

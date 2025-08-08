@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['10.10.13.59']
 
 INSTALLED_APPS = [
     "corsheaders",
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,9 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'messaging.apps.MessagingConfig',
     'accounts.apps.AccountsConfig',
     'jobs.apps.JobsConfig',
     'service_provider.apps.ServiceProviderConfig',
+    'channels',
+    'channels_redis',
     'django_filters',
 
     'rest_framework',
@@ -124,8 +128,17 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
-WSGI_APPLICATION = 'swish.wsgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
+WSGI_APPLICATION = 'swish.wsgi.application'
+ASGI_APPLICATION = 'swish.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

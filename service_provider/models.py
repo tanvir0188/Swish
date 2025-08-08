@@ -68,14 +68,16 @@ class Bid(models.Model):
 class Employee(models.Model):
   first_name=models.CharField(max_length=255, blank=False, null=False)
   last_name = models.CharField(max_length=255, blank=False, null=False)
-  designation=models.CharField(max_length=255, blank=False, null=False)
+  role=models.CharField(max_length=255, blank=False, null=False)
   image=models.ImageField(upload_to='uploads/employee_images', null=True, blank=True)
+  phone_number=models.CharField(blank=True, null=True)
   company=models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
   reference=models.CharField(max_length=255, blank=True, null=True)
+  email=models.EmailField(blank=False, null=False)
   def __str__(self):
-    return self.name
+    return f'{self.first_name} {self.last_name}'
   class Meta:
-    ordering=['designation']
+    ordering=['role']
     verbose_name_plural='Employees'
 
 PACKAGE_CHOICES = [

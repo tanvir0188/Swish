@@ -11,9 +11,10 @@ from rest_framework.views import APIView
 from jobs.models import Job, Area, SubCategory, Favorite
 from jobs.serializers import ReviewSerializer
 from service_provider.filters import JobFilter
-from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
+from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid, Employee
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
-  BiddingSerializer, CompanyProfileDetailSerializer, SubCategorySerializer, CompanyLogoWallpaperSerializer
+  BiddingSerializer, CompanyProfileDetailSerializer, SubCategorySerializer, CompanyLogoWallpaperSerializer, \
+  EmployeeListSerializer, EmployeeSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -576,6 +577,85 @@ class CompanyBiddingAPIView(APIView):
       }, status=status.HTTP_200_OK)
 
     return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+class EmployeeApiView(APIView):
+  permission_classes = [IsAuthenticated]
+  def get(self, request):
+    try:
+      employees = Employee.objects.filter(company=request.user.company_profile)
+      serializer = EmployeeListSerializer(employees, many=True)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({
+        "error": str(e),
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class EmployeeListAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request):
+    company_profile = request.user.company_profile
+    try:
+      employees = Employee.objects.filter(company=company_profile)
+      response = []
+      for employee in employees:
+        response.append({
+          'image': employee.image.url,
+          'id': employee.id
+        })
+      return Response({'data': response}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({
+        "error": str(e),
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+  @extend_schema(
+    request=EmployeeSerializer,
+    responses=EmployeeSerializer
+  )
+  def post(self, request):
+    company_profile = request.user.company_profile
+    serializer = EmployeeSerializer(data=request.data)
+    if serializer.is_valid():
+      serializer.save(company=company_profile)
+      return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
+    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmployeeDetailAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+
+  def get(self, request,pk):
+    try:
+      employee=Employee.objects.get(pk=pk)
+      if not employee.company.user == request.user:
+        return Response({
+          "error": "You don't have permission to see this employee."
+        }, status=status.HTTP_403_FORBIDDEN)
+      serializer = EmployeeSerializer(employee)
+      return Response({'data':serializer.data}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({
+        "error": str(e),
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+  @extend_schema(
+    request=EmployeeSerializer,
+    responses=EmployeeSerializer
+  )
+  def patch(self, request, pk):
+    try:
+      employee=Employee.objects.get(pk=pk)
+      serializer = EmployeeSerializer(employee, data=request.data, partial=True)
+      if serializer.is_valid():
+        serializer.save()
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+      return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+      return Response({
+        "error": str(e),
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 # class ReviewAPIView(APIView):
 #   permission_classes = [IsAuthenticated]

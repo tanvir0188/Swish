@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.models import User
-from service_provider.models import TokenTransaction, CompanyProfile, Bid, TokenPackage
+from service_provider.models import TokenTransaction, CompanyProfile, Bid, TokenPackage, Employee
 from jobs.models import Job, SubCategory, Favorite, Area, Review
 import random
 import string
@@ -204,3 +204,20 @@ class CompanyLogoWallpaperSerializer(serializers.ModelSerializer):
   class Meta:
     model=CompanyProfile
     fields=['logo', 'wallpaper']
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+  full_name=serializers.SerializerMethodField()
+  designation=serializers.SerializerMethodField()
+  class Meta:
+    model = Employee
+    fields = ['full_name', 'image', 'designation']
+
+  def get_full_name(self, obj):
+    return f'{obj.first_name} {obj.last_name}'
+  def get_designation(self, obj):
+    return f'{obj.role}'
+
+class EmployeeSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Employee
+    fields= ['first_name', 'last_name', 'role', 'phone_number', 'email', 'image']

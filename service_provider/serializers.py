@@ -39,7 +39,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
     queryset=Area.objects.all(),
     write_only=True
   )
-  area_data = SubCategorySerializer(source='sub_category', many=True, read_only=True)
+  area_data = SubCategorySerializer(source='area', many=True, read_only=True)
   class Meta:
     model = CompanyProfile
     fields = [
@@ -187,3 +187,20 @@ class BiddingSerializer(serializers.ModelSerializer):
     data['price'] = instance.amount
     return data
 
+class CompanyProfileDetailSerializer(serializers.ModelSerializer):
+  sub_category = serializers.PrimaryKeyRelatedField(
+    many=True,
+    queryset=SubCategory.objects.all(),
+    write_only=True
+  )
+  # For reading (returning objects)
+  sub_category_data = SubCategorySerializer(source='sub_category', many=True, read_only=True)
+
+  class Meta:
+    model = CompanyProfile
+    fields = ['company_name', 'phone_number', 'business_email', 'address', 'sub_category', 'sub_category_data']
+
+class CompanyLogoWallpaperSerializer(serializers.ModelSerializer):
+  class Meta:
+    model=CompanyProfile
+    fields=['logo', 'wallpaper']

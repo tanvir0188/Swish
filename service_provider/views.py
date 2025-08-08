@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, defaultdict
 from django.db.models.aggregates import Sum
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
@@ -13,7 +13,7 @@ from jobs.serializers import ReviewSerializer
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
-  BiddingSerializer
+  BiddingSerializer, CompanyProfileDetailSerializer, SubCategorySerializer, CompanyLogoWallpaperSerializer
 
 
 class UnlockJobAPIView(APIView):
@@ -160,21 +160,64 @@ class CompanyProfileAPIView(APIView):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-  @extend_schema(
-    request=CompanyProfileSerializer,
-    responses={200: CompanyProfileSerializer, 404: 'Not found', 400: 'Validation error'}
-  )
-  @extend_schema(
-    responses={200: CompanyProfileSerializer, 404: 'Not found'}
-  )
+class CompanyProfileDetailAPIView(APIView):
+  permission_classes = [IsAuthenticated]
   def get(self, request):
     user = request.user
+    if user.role =='private':
+      return Response({'error':'Change your role to Company first'}, status=status.HTTP_403_FORBIDDEN)
+    company_profile=user.company_profile
+    serializer = CompanyProfileDetailSerializer(company_profile)
     try:
-      company_profile = user.company_profile
-      serializer = CompanyProfileSerializer(company_profile)
       return Response(serializer.data, status=status.HTTP_200_OK)
-    except CompanyProfile.DoesNotExist:
-      return Response({'error': 'Company profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_company_cat_and_sub_cat(request):
+  company_profile = request.user.company_profile
+  sub_categories = company_profile.sub_category.select_related('category').all()
+
+  # Group subcategories by their category
+  grouped_data = defaultdict(list)
+  for sub in sub_categories:
+    grouped_data[sub.category.name].append(sub)
+
+  # Format the response
+  result = []
+  for category_name, subs in grouped_data.items():
+    result.append({
+      "category_name": category_name,
+      "sub_categories": SubCategorySerializer(subs, many=True).data
+    })
+
+  return Response({'data': result}, status=status.HTTP_200_OK)
+
+class CompanyLogoAndWallpaperAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  def get(self, request):
+    try:
+      company_profile = request.user.company_profile
+      serializer = CompanyLogoWallpaperSerializer(company_profile)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+  def patch(self, request):
+    try:
+      if request.user.role!='company':
+        return Response({
+          'error':'Change your role to Company first',
+        })
+      company_profile = request.user.company_profile
+      serializer = CompanyLogoWallpaperSerializer(company_profile, data=request.data, partial=True)
+      if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @extend_schema(
   methods=["PATCH"],

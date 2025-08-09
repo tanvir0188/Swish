@@ -19,4 +19,15 @@
     "email": "jason02@example.net"
   }
 }
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NTYwNDcxNywiaWF0IjoxNzU0NzQwNzE3LCJqdGkiOiJmMDlmNTliZTY1NTE0MzY3OGNjYTBlNzA2MjgyYWY1OCIsInVzZXJfaWQiOjE2LCJyb2xlIjoiY29tcGFueSJ9.QA9XQOIiGwD2vfRJLgC4-prgMtUf7i2C-8BQTUoQn7U",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1NjA0NzE3LCJpYXQiOjE3NTQ3NDA3MTcsImp0aSI6ImNiNTY4NDRjZDM4NzQzYWE5ZmYxOWU5MTk0ZWQ2YjQxIiwidXNlcl9pZCI6MTYsInJvbGUiOiJjb21wYW55In0.Kg3R6FpkdcgD5R7UYbFOjXAotZanqFPhMISzDO7R3lo",
+  "login_user_info": {
+    "first_name": "Teresa",
+    "surname": "Church",
+    "telephone": "+1-397-961-1895x90268",
+    "email": "william01@example.org",
+    "profile_image": "/media/uploads/profile_images/Screenshot_2025-07-30_143139.png"
+  }
+}
 

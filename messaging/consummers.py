@@ -1,11 +1,11 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
+from accounts.models import User
 from .models import Room, Message
 from .serializers import MessageSerializer
 
-User = get_user_model()
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
   async def connect(self):

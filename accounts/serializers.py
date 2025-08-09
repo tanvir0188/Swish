@@ -72,16 +72,16 @@ class LogoutSerializer(serializers.Serializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
   new_password = serializers.CharField(required=True)
-  def validate_new_password(self, new_password):
-    if len(new_password) < 8:
-      raise serializers.ValidationError("Password must be at least 6 characters long.")
-    if not re.search(r'[A-Z]', new_password):
-      raise serializers.ValidationError("Password must contain at least one uppercase letter.")
-    if not re.search(r'[a-z]', new_password):
-      raise serializers.ValidationError("Password must contain at least one lowercase letter.")
-    if not re.search(r'\d', new_password):
-      raise serializers.ValidationError("Password must contain at least one digit.")
-    return new_password
+  # def validate_new_password(self, new_password):
+  #   if len(new_password) < 5:
+  #     raise serializers.ValidationError("Password must be at least 5 characters long.")
+  #   if not re.search(r'[A-Z]', new_password):
+  #     raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+  #   if not re.search(r'[a-z]', new_password):
+  #     raise serializers.ValidationError("Password must contain at least one lowercase letter.")
+  #   if not re.search(r'\d', new_password):
+  #     raise serializers.ValidationError("Password must contain at least one digit.")
+  #   return new_password
 
 class SubscribeSerializer(serializers.ModelSerializer):
   class Meta:
@@ -114,15 +114,22 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
   def validate(self, attrs):
     data = super().validate(attrs)
 
-    # Add custom login_user_info
     user = self.user
+    profile_image = (
+      user.image.url
+      if getattr(user, 'image') and hasattr(user.image, 'url')
+      else '/media/default.jpg'
+    )
+
     data['login_user_info'] = {
       'first_name': user.first_name,
       'surname': user.surname,
       'telephone': user.telephone,
-      'email':user.email
+      'email': user.email,
+      'profile_image': profile_image
     }
     return data
+
 
 
 class MyRefreshToken(RefreshToken):

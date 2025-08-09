@@ -22,23 +22,19 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-  room = serializers.PrimaryKeyRelatedField(read_only=True)
-  user = UserMinimalSerializer(read_only=True)
-  file = serializers.FileField(required=False, allow_null=True)
+  user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+  room = serializers.PrimaryKeyRelatedField(queryset=Room.objects.all())
 
   class Meta:
     model = Message
-    fields = [
-      'id',
-      'room',
-      'text',
-      'file',
-      'user',
-      'seen',
-      'created_at',
-      'updated_at',
-    ]
-    read_only_fields = ['id', 'room', 'user', 'created_at', 'updated_at']
+    fields = ['id', 'room', 'text', 'file', 'user', 'seen', 'created_at', 'updated_at']
+
+  def validate(self, data):
+    if not data.get('user'):
+      raise serializers.ValidationError("User is required")
+    if not data.get('room'):
+      raise serializers.ValidationError("Room is required")
+    return data
 
 
 class RoomSerializer(serializers.ModelSerializer):

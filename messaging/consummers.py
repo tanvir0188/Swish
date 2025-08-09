@@ -1,9 +1,12 @@
 import json
+
+import redis
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from accounts.models import User
 from .models import Room, Message
 from .serializers import MessageSerializer
+redis_client = redis.Redis(host='localhost', port=6380, db=0, decode_responses=True)
 
 
 
@@ -13,18 +16,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     self.room_group_name = f'chat_{self.room_id}'
     self.user = self.scope['user']
 
-    # Check if user is authenticated
     if self.user.is_anonymous:
       await self.close()
       return
 
-    # Check if room exists and user has access
     room_exists = await self.check_room_access()
     if not room_exists:
       await self.close()
       return
 
-    # Join room group (used for broadcasting to both users)
     await self.channel_layer.group_add(
       self.room_group_name,
       self.channel_name
@@ -32,15 +32,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     await self.accept()
 
-    # Send existing messages to the newly connected user
+    # Add this user to Redis set for connected users in this room
+    redis_key = f"room_{self.room_id}_connected"
+    # Run in threadpool since redis-py is sync
+    await database_sync_to_async(redis_client.sadd)(redis_key, str(self.user.id))
+    await self.mark_all_messages_seen_if_both_connected()
+    # Optionally, get the count of connected users
+    connected_count = await database_sync_to_async(redis_client.scard)(redis_key)
+
+    print(f"Users connected in room {self.room_id}: {connected_count}")
+
+    # Now you can act on connected_count if you want
+
     await self.send_existing_messages()
 
   async def disconnect(self, close_code):
-    # Leave room group
-    await self.channel_layer.group_discard(
-      self.room_group_name,
-      self.channel_name
-    )
+    redis_key = f"room_{self.room_id}_connected"
+    await database_sync_to_async(redis_client.srem)(redis_key, str(self.user.id))
+    await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
   async def receive(self, text_data):
     try:
@@ -100,6 +109,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
     }))
 
   @database_sync_to_async
+  def mark_all_messages_seen_if_both_connected(self):
+    room_id = self.room_id
+
+    # Get room user IDs
+    try:
+      room = Room.objects.get(pk=room_id)
+      user_ids = list(room.current_users.values_list('id', flat=True))
+    except Room.DoesNotExist:
+      return False
+
+    redis_key = f"room_{room_id}_connected"
+    connected_user_ids = redis_client.smembers(redis_key)
+    connected_user_ids = set(map(int, connected_user_ids))
+
+    if set(user_ids).issubset(connected_user_ids) and len(user_ids) == 2:
+      # Update all unseen messages to seen=True
+      room.messages.filter(seen=False).update(seen=True)
+      return True
+    return False
+  @database_sync_to_async
   def check_room_access(self):
     """Check if room exists, is private, and user has access to it"""
     try:
@@ -114,21 +143,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
   @database_sync_to_async
   def save_message(self, data):
-    """Save message to database for the private room"""
+    """Save message and set seen=True if both users connected."""
     try:
       room = Room.objects.get(pk=self.room_id)
-      # Verify room is private and has exactly 2 users
       if not room.is_private or room.current_users.count() != 2:
         return None
       if self.user not in room.current_users.all() and room.creator != self.user:
         return None
 
+      # Check if both connected (using the Redis presence set)
+      redis_key = f"room_{self.room_id}_connected"
+      connected_user_ids = redis_client.smembers(redis_key)
+      connected_user_ids = set(map(int, connected_user_ids))
+
+      room_user_ids = set(room.current_users.values_list('id', flat=True))
+
+      both_connected = room_user_ids.issubset(connected_user_ids)
+
       data['user'] = self.user.id
       data['room'] = room.id
 
+      # Mark new message as seen if both connected
+      if both_connected:
+        data['seen'] = True
+
       serializer = MessageSerializer(data=data)
       if serializer.is_valid():
-        return serializer.save()
+        message = serializer.save()
+
+        # Mark all old messages as seen if both connected
+        if both_connected:
+          room.messages.filter(seen=False).update(seen=True)
+
+        return message
       else:
         return None
     except Room.DoesNotExist:

@@ -8,7 +8,7 @@ from .models import User  # or use get_user_model()
 
 def send_otp_for_password(email, otp):
   subject = "Verification Code for Resetting Password"
-  plain_message = f'Your verification code is {otp}. Expires in 1 minute.'
+  plain_message = f'Your verification code is {otp}. Expires in 3 minute.'
   html_message = f'''
     <html>
       <body>

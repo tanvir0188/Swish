@@ -137,7 +137,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-WSGI_APPLICATION = 'swish.wsgi.application'
 ASGI_APPLICATION = 'swish.asgi.application'
 
 # Database

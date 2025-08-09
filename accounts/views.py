@@ -128,7 +128,7 @@ def email_verification_otp(request):
 
   otp = random.randint(1000, 9999)
   user.otp = otp
-  user.otp_expires = timezone.now() + timedelta(minutes=1)
+  user.otp_expires = timezone.now() + timedelta(minutes=3)
   user.save()
 
   send_otp_for_password(user.email, otp)

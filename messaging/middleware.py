@@ -3,9 +3,9 @@ from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth import get_user_model
+from accounts.models import User
 
-User = get_user_model()
+
 
 @database_sync_to_async
 def get_user(token):

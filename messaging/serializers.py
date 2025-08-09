@@ -52,7 +52,6 @@ class RoomSerializer(serializers.ModelSerializer):
       'creator',
 
     ]
-
     read_only_fields = ['id', 'creator', 'current_users_info']
 
 class RoomListSerializer(serializers.ModelSerializer):

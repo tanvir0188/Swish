@@ -74,7 +74,6 @@ class RoomListAPIView(APIView):
 			'status': 'success'
 		}, status=status.HTTP_200_OK)
 
-
 class RoomDetailView(APIView):
 	permission_classes = [IsAuthenticated]
 
@@ -135,8 +134,6 @@ class RoomMessageView(APIView):
 		# permission: user must be participant or creator
 		if not (room.creator == request.user or room.current_users.filter(id=request.user.id).exists()):
 			return Response({'error': 'You do not have access to this room.'}, status=status.HTTP_403_FORBIDDEN)
-
-		# Order by created_at ascending so oldest messages come first (typical chat view)
 		messages_qs = Message.objects.filter(room=room).order_by('created_at')
 
 		paginator = MessagePagination()

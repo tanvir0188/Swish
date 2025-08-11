@@ -13,18 +13,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     self.room_group_name = f'chat_{self.room_id}'
     self.user = self.scope['user']
 
-    # Check if user is authenticated
     if self.user.is_anonymous:
       await self.close()
       return
 
-    # Check if room exists and user has access
     room_exists = await self.check_room_access()
     if not room_exists:
       await self.close()
       return
 
-    # Join room group (used for broadcasting to both users)
     await self.channel_layer.group_add(
       self.room_group_name,
       self.channel_name
@@ -32,7 +29,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     await self.accept()
 
-    # Send existing messages to the newly connected user
     await self.send_existing_messages()
 
   async def disconnect(self, close_code):
@@ -78,6 +74,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
       elif message_type == 'get_messages':
         # Send existing messages
         await self.send_existing_messages()
+      elif message_type == 'seen_receipt':
+        message_ids = text_data_json.get('message_ids', [])
+        if message_ids:
+          await self.mark_messages_seen(message_ids)
+
+      elif message_type == 'message_seen_update':
+        await self.message_seen_update(text_data_json.get('message_ids', []))
 
     except json.JSONDecodeError:
       await self.send(text_data=json.dumps({
@@ -100,6 +103,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
     }))
 
   @database_sync_to_async
+  def mark_messages_seen_in_db(self, message_ids):
+    messages = Message.objects.filter(
+      id__in=message_ids,
+      room_id=self.room_id
+    ).exclude(user=self.user).filter(seen=False)
+    updated_count = messages.update(seen=True)
+    return updated_count, message_ids
+
+  async def mark_messages_seen(self, message_ids):
+    updated_count, updated_message_ids = await self.mark_messages_seen_in_db(message_ids)
+    if updated_count > 0:
+      await self.channel_layer.group_send(
+        self.room_group_name,
+        {
+          'type': 'message_seen_update',
+          'message_ids': updated_message_ids,
+          'seen_by': self.user.id  # send user ID or username as needed
+        }
+      )
+
+  async def message_seen_update(self, event):
+    await self.send(text_data=json.dumps({
+      'type': 'messages_seen_update',
+      'message_ids': event['message_ids'],
+      'seen_by': event['seen_by'],
+    }))
+
+  @database_sync_to_async
   def check_room_access(self):
     """Check if room exists, is private, and user has access to it"""
     try:
@@ -117,7 +148,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     """Save message to database for the private room"""
     try:
       room = Room.objects.get(pk=self.room_id)
-      # Verify room is private and has exactly 2 users
       if not room.is_private or room.current_users.count() != 2:
         return None
       if self.user not in room.current_users.all() and room.creator != self.user:
@@ -147,7 +177,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
       room = Room.objects.get(pk=self.room_id)
       if not room.is_private or room.current_users.count() != 2:
         return []
-      messages = Message.objects.filter(room=room).order_by('created_at')
+      messages = Message.objects.filter(room=room).order_by('-created_at')
       serializer = MessageSerializer(messages, many=True)
       return serializer.data
     except Room.DoesNotExist:

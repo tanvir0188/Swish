@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Count
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +8,7 @@ from rest_framework.pagination import PageNumberPagination
 from drf_spectacular.utils import extend_schema
 
 from accounts.models import User
+from jobs.models import Job
 from .models import Room, Message
 from .serializers import RoomSerializer, RoomDetailSerializer, MessageSerializer, RoomListSerializer
 
@@ -73,6 +74,60 @@ class RoomListAPIView(APIView):
 			'rooms': serializer.data,
 			'status': 'success'
 		}, status=status.HTTP_200_OK)
+
+class ActiveRoomListAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		user = request.user  # client
+
+		# Step 1: Get 'In Progress' jobs posted by this client
+		jobs_posted = Job.objects.filter(posted_by=user, status="In Progress")
+
+		# Step 2: Get all related company users from the bids
+		related_user_ids = (
+			jobs_posted
+			.values_list('bid__bidding_company', flat=True)
+			.distinct()
+		)
+
+		# Step 3: Filter rooms between client and those company users
+		rooms = (
+			Room.objects.filter(
+				Q(creator=user, current_users__id__in=related_user_ids) |
+				Q(current_users=user, creator__id__in=related_user_ids)
+			)
+			.distinct()
+			.order_by('-id')
+		)
+		# Step 4: Serialize for frontend
+		serializer = RoomListSerializer(rooms, many=True, context={'request': request})
+		return Response(serializer.data)
+
+class UnreadRoomListAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		user = request.user
+
+		# Get rooms where the user is creator or member, with unread messages from others
+		rooms = Room.objects.filter(
+				Q(creator=user) | Q(current_users=user)
+		).annotate(
+				unread_count=Count(
+						'messages',
+						filter=Q(messages__seen=False) & ~Q(messages__user=user)
+				)
+		).filter(
+				unread_count__gt=0
+		).order_by('-id')
+
+		serializer = RoomListSerializer(rooms, many=True, context={'request': request})
+		return Response({
+				'rooms': serializer.data,
+				'status': 'success'
+		}, status=status.HTTP_200_OK)
+
 class MessagePagination(PageNumberPagination):
 	page_size = 50
 
@@ -95,18 +150,3 @@ class RoomMessageView(APIView):
 		page = paginator.paginate_queryset(messages_qs, request)
 		serializer = MessageSerializer(page, many=True)
 		return paginator.get_paginated_response(serializer.data)
-
-	def post(self, request, pk):
-		room = get_object_or_404(Room, pk=pk)
-
-		# permission: user must be participant or creator to post a message
-		if not (room.creator == request.user or room.current_users.filter(id=request.user.id).exists()):
-			return Response({'error': 'You do not have access to this room.'}, status=status.HTTP_403_FORBIDDEN)
-
-		serializer = MessageSerializer(data=request.data)
-		if serializer.is_valid():
-			message = serializer.save(user=request.user, room=room)
-			out_serializer = MessageSerializer(message)
-			return Response({'message': out_serializer.data, 'status': 'success'}, status=status.HTTP_201_CREATED)
-
-		return Response({'message': serializer.errors, 'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)

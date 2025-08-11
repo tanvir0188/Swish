@@ -1,4 +1,4 @@
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Avg
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import status
@@ -12,7 +12,7 @@ from accounts.models import User
 from jobs.models import Category, SubCategory, Job, JobPauseReason, SiteImage
 from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer, \
   BidStatusUpdateSerializer, ReviewSerializer, JobPausingReasonSerializer
-from service_provider.models import Bid
+from service_provider.models import Bid, CompanyProfile
 
 
 # Create your views here.
@@ -202,7 +202,6 @@ def delete_job(request, pk):
   except Exception as e:
     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ReviewAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
@@ -240,7 +239,6 @@ class ReviewAPIView(APIView):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class JobPausingReasonAPIView(APIView):
   permission_classes = [IsAuthenticated]
 
@@ -274,3 +272,44 @@ class JobPausingReasonAPIView(APIView):
 
     except Exception as e:
       return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_previously_used_companies(request):
+  try:
+    if request.user.role != 'private':
+      return Response({
+        'error': 'Change your role to private first',
+      }, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Get all companies that the user has hired before
+    hired_company_ids = (
+      Job.objects
+      .filter(posted_by=request.user)
+      .values_list('bid__bidding_company', flat=True)
+      .distinct()
+    )
+
+    companies = (
+      CompanyProfile.objects
+      .filter(user__id__in=hired_company_ids)
+      .annotate(average_review_score=Avg('user__reviews_received__rating'))
+      .order_by('-average_review_score')
+    )
+
+    result = [
+      {
+        'company_name': c.company_name,
+        'logo': request.build_absolute_uri(c.logo.url) if c.logo else None,
+        'user_id': c.user.id,
+        'average_review_score': round(c.average_review_score or 0, 1)
+      }
+      for c in companies
+    ]
+
+    return Response(result, status=status.HTTP_200_OK)
+
+  except Exception as e:
+    return Response({
+      'error': str(e)
+    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

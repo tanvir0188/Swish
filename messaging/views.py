@@ -73,51 +73,6 @@ class RoomListAPIView(APIView):
 			'rooms': serializer.data,
 			'status': 'success'
 		}, status=status.HTTP_200_OK)
-
-class RoomDetailView(APIView):
-	permission_classes = [IsAuthenticated]
-
-	@extend_schema(
-		request=RoomDetailSerializer,
-		responses={200: RoomDetailSerializer, 404: 'Not found'}
-	)
-	def get(self, request, pk):
-		room = get_object_or_404(Room, pk=pk)
-
-		# permission: user must be participant or creator
-		if not (room.creator == request.user or room.current_users.filter(id=request.user.id).exists()):
-			return Response({'error': 'You do not have access to this room.'}, status=status.HTTP_403_FORBIDDEN)
-
-		serializer = RoomDetailSerializer(room)
-		return Response({
-			'room': serializer.data,
-			'status': 'success'
-		}, status=status.HTTP_200_OK)
-
-	@extend_schema(
-		request=RoomDetailSerializer,
-		responses={200: RoomDetailSerializer, 400: 'Validation Error', 403: 'Forbidden', 404: 'Not found'}
-	)
-	def patch(self, request, pk):
-		room = get_object_or_404(Room, pk=pk)
-
-		# Only the creator can modify room metadata (name/is_private/current_users etc.)
-		if room.creator != request.user:
-			return Response({'error': 'Only the room creator can update the room.'}, status=status.HTTP_403_FORBIDDEN)
-
-		serializer = RoomDetailSerializer(room, data=request.data, partial=True)
-		if serializer.is_valid():
-			serializer.save()
-			return Response({
-				'room': serializer.data,
-				'status': 'success'
-			}, status=status.HTTP_200_OK)
-
-		return Response({
-			'room': serializer.errors,
-			'status': 'error'
-		}, status=status.HTTP_400_BAD_REQUEST)
-
 class MessagePagination(PageNumberPagination):
 	page_size = 50
 

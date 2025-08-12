@@ -50,7 +50,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ['first_name', 'surname', 'telephone', 'email', 'home_address', 'city']
+    fields = ['first_name', 'surname', 'telephone', 'email', 'home_address', 'city', 'image']
 
 class OTPSerializer(serializers.Serializer):
   email = serializers.EmailField()

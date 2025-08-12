@@ -69,8 +69,6 @@ class User(AbstractUser):
     verbose_name = 'User'
     verbose_name_plural = 'Users'
 
-
-
 class PreSubscription(models.Model):
   company_name=models.CharField(max_length=255, null=True, blank=True)
   full_name=models.CharField(max_length=255, null=True, blank=True)

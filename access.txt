@@ -31,3 +31,15 @@
   }
 }
 
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NTc3MjY3OCwiaWF0IjoxNzU0OTA4Njc4LCJqdGkiOiI3MDk4YmJmOTEyOWQ0MGFlYTM4NDA0MTYwYjUyYzQ0NiIsInVzZXJfaWQiOjIzLCJyb2xlIjoiY29tcGFueSJ9.czVpVE_dZVqpA4loL6YmtjVxiuPOMGjqQDqzTb35Uhg",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1NzcyNjc4LCJpYXQiOjE3NTQ5MDg2NzgsImp0aSI6ImRlZTAzZjIyOThlZDRiMTdhMjgzNzc2ZGQxMzkxNmI2IiwidXNlcl9pZCI6MjMsInJvbGUiOiJjb21wYW55In0.J1EFw6zITFNhDExRFM_HJLp3p16G1xTPWQ6pv1TMLPw",
+  "login_user_info": {
+    "first_name": "Patricia",
+    "surname": "Alvarez",
+    "telephone": "834-820-5215x747",
+    "email": "ashley18@example.net",
+    "profile_image": "/media/default.jpg"
+  }
+}
+

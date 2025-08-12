@@ -42,6 +42,7 @@ class RegisterView(APIView):
       }
       return Response(response_data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class ProfileView(APIView):
   permission_classes = [IsAuthenticated]
   @extend_schema(
@@ -55,6 +56,15 @@ class ProfileView(APIView):
       serializer.save()
       return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  def get(self, request):
+    user = request.user
+    try:
+      serializer = ProfileSerializer(user)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @extend_schema(
   request=EmailSerializer,

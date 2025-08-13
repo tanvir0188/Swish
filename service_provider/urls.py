@@ -3,7 +3,8 @@ from django.urls import path
 from service_provider.views import UnlockJobAPIView, CompanyProfileAPIView, add_area, add_work_type, \
 	ToggleFavoriteAPIView, SideBarInfoAPIView, filtered_job_list, JobDetailAPIView, CompanyBiddingAPIView, \
 	EditSubCategoryAPIView, patch_company_profile, CompanyProfileDetailAPIView, get_company_cat_and_sub_cat, \
-	CompanyLogoAndWallpaperAPIView, EmployeeApiView, EmployeeDetailAPIView, EmployeeListAPIView, get_review_list
+	CompanyLogoAndWallpaperAPIView, EmployeeApiView, EmployeeDetailAPIView, EmployeeListAPIView, get_review_list, \
+	get_sub_categories
 
 urlpatterns = [
 	path('job-unlock/<int:pk>',UnlockJobAPIView.as_view(), name='job-unlock' ),
@@ -13,6 +14,7 @@ urlpatterns = [
 	path('company-sub-categories', get_company_cat_and_sub_cat, name='company-sub-categories' ),
 	path('company-logo-wallpaper', CompanyLogoAndWallpaperAPIView.as_view(), name='company-logo-wallpaper' ),
 	path('sub-category', EditSubCategoryAPIView.as_view(), name='sub-category' ),
+	path('sub-category-list/<int:pk>', get_sub_categories, name='sub-category-list'),
 	path('add-area',add_area, name='add-area' ),
 	path('add-work-type', add_work_type, name='add-work-type' ),
 	path('toggle-favorite', ToggleFavoriteAPIView.as_view(), name='toggle-favorite' ),

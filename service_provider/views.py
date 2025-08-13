@@ -729,5 +729,19 @@ def get_review_list(request):
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_sub_categories(request, pk):
+  try:
+    sub_cats = SubCategory.objects.filter(category=pk)
+    response = []
+    for sub_cat in sub_cats:
+      response.append({
+        'id': sub_cat.id,
+        'name': sub_cat.name
+      })
+    return Response(response, status=status.HTTP_200_OK)
+  except Exception as e:
+    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

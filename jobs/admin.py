@@ -1,15 +1,27 @@
 from django.contrib import admin
-
+from unfold.admin import ModelAdmin
 from jobs.models import Category, Job, SubCategory, JobPauseReason, Area, SiteImage, Review
 
 # Register your models here.
-admin.site.register(Category)
-admin.site.register(SubCategory)
-class JobAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
+    pass
+admin.site.register(Category, CategoryAdmin)
+class SubCategoryAdmin(ModelAdmin):
+    pass
+admin.site.register(SubCategory, SubCategoryAdmin)
+class JobAdmin(ModelAdmin):
     list_display = ('heading', 'posted_by', 'category','area', 'custom_category', 'value', 'created_at')
     list_per_page = 20  # number of jobs per page
-admin.site.register(SiteImage)
+class SiteImageAdmin(ModelAdmin):
+    pass
+admin.site.register(SiteImage, SiteImageAdmin)
 admin.site.register(Job, JobAdmin)
-admin.site.register(JobPauseReason)
-admin.site.register(Area)
-admin.site.register(Review)
+class JobPauseReasonAdmin(ModelAdmin):
+    pass
+admin.site.register(JobPauseReason, JobPauseReasonAdmin)
+class AreaAdmin(ModelAdmin):
+    pass
+admin.site.register(Area, AreaAdmin)
+class ReviewAdmin(ModelAdmin):
+    pass
+admin.site.register(Review, ReviewAdmin)

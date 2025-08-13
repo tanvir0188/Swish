@@ -34,6 +34,7 @@ ALLOWED_HOSTS = ['10.10.13.59', '127.0.0.1']
 INSTALLED_APPS = [
     "corsheaders",
     'daphne',
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

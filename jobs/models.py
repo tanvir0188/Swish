@@ -7,6 +7,7 @@ from multiselectfield import MultiSelectField
 
 class Category(models.Model):
   name=models.CharField(max_length=100, unique=True, db_index=True)
+  code = models.IntegerField(unique=True, null=True, blank=True)
   category_icon=models.ImageField(upload_to="uploads/category_icons", null=True, blank=True)
   description=models.TextField(null=True, blank=True)
   def __str__(self):

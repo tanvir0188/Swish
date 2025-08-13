@@ -4,7 +4,8 @@ from jobs.models import Category, Job, SubCategory, JobPauseReason, Area, SiteIm
 
 # Register your models here.
 class CategoryAdmin(ModelAdmin):
-    pass
+    fields = ['name','code', 'category_icon', 'description']
+    readonly_fields = []
 admin.site.register(Category, CategoryAdmin)
 class SubCategoryAdmin(ModelAdmin):
     pass

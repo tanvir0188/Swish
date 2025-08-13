@@ -8,7 +8,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from jobs.models import Job, Area, SubCategory, Favorite, Review
+from jobs.models import Job, Area, SubCategory, Favorite, Review, Category
 from service_provider.filters import JobFilter
 from service_provider.models import TokenPackage, TokenTransaction, CompanyProfile, Bid, Employee
 from service_provider.serializers import CompanyProfileSerializer, JobListSerializer, AddFavoriteSerializer, \
@@ -733,7 +733,8 @@ def get_review_list(request):
 @permission_classes([IsAuthenticated])
 def get_sub_categories(request, pk):
   try:
-    sub_cats = SubCategory.objects.filter(category=pk)
+    category=Category.objects.get(pk=pk)
+    sub_cats = SubCategory.objects.filter(category=category)
     response = []
     for sub_cat in sub_cats:
       response.append({

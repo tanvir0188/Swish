@@ -9,6 +9,7 @@ from drf_spectacular.utils import extend_schema
 
 from accounts.models import User
 from jobs.models import Job
+from service_provider.models import Bid
 from .models import Room, Message
 from .serializers import RoomSerializer, RoomDetailSerializer, MessageSerializer, RoomListSerializer
 
@@ -127,6 +128,33 @@ class UnreadRoomListAPIView(APIView):
 				'rooms': serializer.data,
 				'status': 'success'
 		}, status=status.HTTP_200_OK)
+
+class WonRoomListAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		user = request.user
+
+		# 1. Get all completed bids by this user
+		completed_bids = Bid.objects.filter(
+			bidding_company=user,
+			status="Complete"
+		).select_related("job")
+
+		# 2. Get the other users from those jobs
+		# Assuming Job model has a `created_by` or `owner` FK to User
+		other_users = set(bid.job.posted_by for bid in completed_bids)
+
+		# 3. Get rooms with both current user and other party
+		rooms = Room.objects.filter(
+			current_users=user
+		).filter(
+			current_users__in=other_users
+		).distinct()
+
+		serializer = RoomListSerializer(rooms, many=True, context={'request': request})
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class MessagePagination(PageNumberPagination):
 	page_size = 50

@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils.timezone import now
 from rest_framework import serializers
 from accounts.models import User
 from .models import Message, Room
@@ -54,6 +57,7 @@ class RoomListSerializer(serializers.ModelSerializer):
   other_user_name = serializers.SerializerMethodField()
   other_user_image = serializers.SerializerMethodField()
   last_message = serializers.SerializerMethodField()
+  online_status = serializers.SerializerMethodField()
 
   class Meta:
     model = Room
@@ -62,6 +66,7 @@ class RoomListSerializer(serializers.ModelSerializer):
       'other_user_name',
       'other_user_image',
       'last_message',
+      'online_status'
     ]
 
   def get_other_user_name(self, obj):
@@ -80,6 +85,12 @@ class RoomListSerializer(serializers.ModelSerializer):
       return last_msg.text
     other_user = obj.current_users.exclude(id=self.context['request'].user.id).first()
     return f"say hi to {other_user.full_name}" if other_user else None
+
+  def get_online_status(self, obj):
+    other_user = obj.current_users.exclude(id=self.context['request'].user.id).first()
+    if not other_user or not other_user.last_seen:
+      return False
+    return (now() - other_user.last_seen) <= timedelta(minutes=3)
 
 
 

@@ -35,6 +35,14 @@ INSTALLED_APPS = [
     "corsheaders",
     'daphne',
     'unfold',
+    "unfold.contrib.filters",  # optional, if special filters are needed
+    "unfold.contrib.forms",  # optional, if special form elements are needed
+    "unfold.contrib.inlines",  # optional, if special inlines are needed
+    "unfold.contrib.import_export",  # optional, if django-import-export package is used
+    "unfold.contrib.guardian",  # optional, if django-guardian package is used
+    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+    "unfold.contrib.location_field",  # optional, if django-location-field package is used
+    "unfold.contrib.constance",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,6 +54,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'jobs.apps.JobsConfig',
     'service_provider.apps.ServiceProviderConfig',
+    'admin_panel.apps.AdminPanelConfig',
     'channels',
     'channels_redis',
     'django_filters',
@@ -185,7 +194,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# In development, Django will look here for extra static files
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # your manually added static files
+]
+
+# In production, collectstatic will gather everything here
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -193,3 +211,31 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+UNFOLD= {
+    "SITE_TITLE": "Swish",
+    "SITE_HEADER": "Admin Panel",
+    "SITE_URL": "/",
+    "SITE_ICON": {
+        "light": lambda request: static("swish.svg"),  # light mode
+        "dark": lambda request: static("swish.svg"),  # dark mode
+    },
+    "SHOW_HISTORY": False,
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "32x32",
+            "type": "image/svg+xml",
+            "href": lambda request: static("swish.svg"),
+        },
+    ],
+    "SIDEBAR":{
+        "show_all_applications": True,
+        "navigation": [
+        ],
+    }
+
+}

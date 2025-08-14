@@ -4,10 +4,6 @@ from unfold.admin import ModelAdmin
 from jobs.models import Favorite
 from service_provider.models import CompanyProfile, Bid, TokenPackage, TokenTransaction
 
-# Register your models here.
-class CompanyProfileAdmin(ModelAdmin):
-    pass
-admin.site.register(CompanyProfile, CompanyProfileAdmin)
 class BidAdmin(ModelAdmin):
     pass
 admin.site.register(Bid, BidAdmin)

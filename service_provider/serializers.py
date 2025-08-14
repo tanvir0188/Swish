@@ -22,29 +22,49 @@ class AreaSerializer(serializers.ModelSerializer):
     fields = ['id', 'name']
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
-  # For writing (accepting IDs)
   sub_category = serializers.PrimaryKeyRelatedField(
     many=True,
     queryset=SubCategory.objects.all(),
     write_only=True
   )
-  # For reading (returning objects)
   sub_category_data = SubCategorySerializer(source='sub_category', many=True, read_only=True)
+
   area = serializers.PrimaryKeyRelatedField(
     many=True,
     queryset=Area.objects.all(),
     write_only=True
   )
-  area_data = SubCategorySerializer(source='area', many=True, read_only=True)
+  area_data = AreaSerializer(source='area', many=True, read_only=True)  # fixed wrong serializer
+
+  opening_hours = serializers.JSONField(required=False)
+
   class Meta:
     model = CompanyProfile
     fields = [
       'company_name', 'phone_number', 'ice_number', 'address', 'city', 'about',
-      'business_email', 'sub_category', 'sub_category_data','area', 'area_data', 'logo', 'wallpaper',
+      'business_email', 'sub_category', 'sub_category_data',
+      'area', 'area_data', 'logo', 'wallpaper',
       'facebook', 'instagram', 'youtube', 'tiktok', 'homepage',
-      'monday_time', 'tuesday_time', 'wednesday_time', 'thursday_time',
-      'friday_time', 'saturday_time', 'sunday_time', 'open_in_weekend'
+      'opening_hours', 'open_in_weekend'
     ]
+
+  def to_representation(self, instance):
+    data = super().to_representation(instance)
+    data['sub_category'] = data.pop('sub_category_data')
+    data['area'] = data.pop('area_data')
+    return data
+
+  def validate_opening_hours(self, value):
+    allowed_days = [
+      "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    ]
+    for day, times in value.items():
+      if day not in allowed_days:
+        raise serializers.ValidationError(f"Invalid day: {day}")
+      if times is not None:
+        if "start" not in times or "end" not in times:
+          raise serializers.ValidationError(f"{day} must have 'start' and 'end' keys")
+    return value
 
   def to_representation(self, instance):
     data = super().to_representation(instance)

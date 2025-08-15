@@ -1,0 +1,20 @@
+{% extends "unfold/layouts/base.html" %}
+{% load i18n unfold %}
+
+{% block content %}
+    {% component "unfold/components/container.html" %}
+        {% component "unfold/components/flex.html" with col=2 %}
+            {% component "unfold/components/card.html" with title=_("Total Users") %}
+                {% component "unfold/components/text.html" %}
+                    {{ total_users }}
+                {% endcomponent %}
+            {% endcomponent %}
+
+            {% component "unfold/components/card.html" with title=_("Total Companies") %}
+                {% component "unfold/components/text.html" %}
+                    {{ total_companies }}
+                {% endcomponent %}
+            {% endcomponent %}
+        {% endcomponent %}
+    {% endcomponent %}
+{% endblock %}

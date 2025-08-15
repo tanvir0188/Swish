@@ -5,7 +5,7 @@ from jobs.models import Favorite
 from service_provider.models import CompanyProfile, Bid, TokenPackage, TokenTransaction
 
 class BidAdmin(ModelAdmin):
-    pass
+	pass
 admin.site.register(Bid, BidAdmin)
 class TokenPackageAdmin(ModelAdmin):
 	list_display = ('company', 'package_name', 'package_balance', 'issued_at', 'expires_at', 'is_paid')

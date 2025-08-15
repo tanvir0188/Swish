@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'daphne',
     'unfold',
+    'django_extensions',
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
     "unfold.contrib.inlines",  # optional, if special inlines are needed
@@ -94,12 +95,11 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'arnob0188@gmail.com'
 EMAIL_HOST_PASSWORD = 'egpg typb tqrq qmbd'
 
-TEMPLATE_DIR= os.path.join(BASE_DIR, 'templates/')
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATE_DIR],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -217,6 +217,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+
 UNFOLD= {
     "SITE_TITLE": "Swish",
     "SITE_HEADER": "Admin Panel",
@@ -234,10 +235,37 @@ UNFOLD= {
             "href": lambda request: static("swish.svg"),
         },
     ],
-    "SIDEBAR":{
-        "show_all_applications": True,
-        "navigation": [
-        ],
-    }
+    "SIDEBAR": {
+    "show_search": False,
+    "command_search": False,
+    "show_all_applications": True,
+    "navigation": [
+        {
+            "title": _("Dashboard"),
+            "separator": True,
+            "collapsible": False,  # not expandable
+            "items": [
+                {
+                    "title": _("Free token funnel"),
+                    "icon": "token",
+                    "link": "http://10.10.13.59:8001/admin/accounts/user/dashboard/",
+                },
+            ],
+        },
+
+        {
+            "title": _("App tables"),
+            "separator": True,
+            "collapsible": False,  # not expandable
+            "items": [
+                {
+                    "title": _("Tables"),
+                    "icon": "table",
+                    "link": reverse_lazy("admin:index"),
+                },
+            ],
+        }
+    ],
+  },
 
 }

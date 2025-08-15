@@ -16,13 +16,17 @@ Including another URLconf
 """
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.admin.templatetags import admin_urls
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 from swish import settings
 
 urlpatterns = [
+    path("admin/", include("admin_panel.urls")),
     path('admin/', admin.site.urls),
+
+
 
     path('accounts/api/v1/',include('accounts.urls')),
 

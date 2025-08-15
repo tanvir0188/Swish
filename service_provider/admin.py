@@ -5,14 +5,16 @@ from jobs.models import Favorite
 from service_provider.models import CompanyProfile, Bid, TokenPackage, TokenTransaction
 
 class BidAdmin(ModelAdmin):
-	pass
+	list_display = ('job', 'bidding_company', 'status')
+	list_filter = ('status',)
+	search_fields = ['job__heading']
 admin.site.register(Bid, BidAdmin)
 class TokenPackageAdmin(ModelAdmin):
 	list_display = ('company', 'package_name', 'package_balance', 'issued_at', 'expires_at', 'is_paid')
 
 admin.site.register(TokenPackage, TokenPackageAdmin)
 class TokenTransactionAdmin(ModelAdmin):
-	pass
+	list_display = ('package', 'job', 'used_by', 'used_at')
 admin.site.register(TokenTransaction, TokenTransactionAdmin)
 class FavoriteAdmin(ModelAdmin):
 	list_display = ('user', 'job')

@@ -82,8 +82,7 @@ PACKAGE_CHOICES = [
 ]
 
 class TokenPackage(models.Model):
-
-  company=models.ForeignKey(User, on_delete=models.CASCADE)
+  company=models.ForeignKey(User, on_delete=models.CASCADE, related_name='token_packages')
   is_paid=models.BooleanField(default=True)
   package_name=models.CharField(choices=PACKAGE_CHOICES, blank=False, null=False)
   package_balance=models.PositiveIntegerField(blank=False, null=False)
@@ -114,9 +113,9 @@ class TokenPackage(models.Model):
     return self.package_name
 #Token transaction is actually the token
 class TokenTransaction(models.Model):
-  package=models.ForeignKey(TokenPackage, on_delete=models.CASCADE)
-  job=models.OneToOneField(Job, on_delete=models.SET_NULL,null=True, related_name='transactions')
-  used_by=models.ForeignKey(User, on_delete=models.SET_NULL,null=True, related_name='transactions')
+  package=models.ForeignKey(TokenPackage, on_delete=models.CASCADE, related_name='transactions')
+  job=models.OneToOneField(Job, on_delete=models.SET_NULL,null=True, related_name='token_transaction')
+  used_by=models.ForeignKey(User, on_delete=models.SET_NULL,null=True, related_name='token_transactions')
   used_at=models.DateTimeField(auto_now_add=True)
 
   def __str__(self):

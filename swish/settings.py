@@ -243,12 +243,12 @@ UNFOLD= {
         {
             "title": _("Dashboard"),
             "separator": True,
-            "collapsible": False,  # not expandable
+            "collapsible": True,  # not expandable
             "items": [
                 {
                     "title": _("Free token funnel"),
                     "icon": "token",
-                    "link": "http://10.10.13.59:8001/admin/accounts/user/dashboard/",
+                    "link": reverse_lazy("admin:dashboard"),
                 },
             ],
         },
@@ -256,7 +256,7 @@ UNFOLD= {
         {
             "title": _("App tables"),
             "separator": True,
-            "collapsible": False,  # not expandable
+            "collapsible": True,  # not expandable
             "items": [
                 {
                     "title": _("Tables"),

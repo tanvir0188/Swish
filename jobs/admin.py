@@ -13,6 +13,7 @@ admin.site.register(SubCategory, SubCategoryAdmin)
 class JobAdmin(ModelAdmin):
     list_display = ('heading', 'posted_by', 'category','area', 'custom_category', 'value', 'created_at')
     list_per_page = 20  # number of jobs per page
+    search_fields = ['heading']
 class SiteImageAdmin(ModelAdmin):
     pass
 admin.site.register(SiteImage, SiteImageAdmin)

@@ -2,19 +2,29 @@
 {% load i18n unfold %}
 
 {% block content %}
-    {% component "unfold/components/container.html" %}
-        {% component "unfold/components/flex.html" with col=2 %}
-            {% component "unfold/components/card.html" with title=_("Total Users") %}
+
+    <div class="flex gap-3">
+
+            {% component "unfold/components/card.html" with title=_("Users Used All 40 Free Tokens") %}
                 {% component "unfold/components/text.html" %}
-                    {{ total_users }}
+                    {{percent_used_all_tokens}} %
                 {% endcomponent %}
             {% endcomponent %}
 
-            {% component "unfold/components/card.html" with title=_("Total Companies") %}
+            {% component "unfold/components/card.html" with title=_("Users Used 1+ Tokens But Never Converted") %}
                 {% component "unfold/components/text.html" %}
-                    {{ total_companies }}
+            {{percent_used_some_never_converted}} %
                 {% endcomponent %}
             {% endcomponent %}
+        {% component "unfold/components/card.html" with title=_("Average time to first token use") %}
+                {% component "unfold/components/text.html" %}
+            {{avg_time_to_first_token}}
+                {% endcomponent %}
+            {% endcomponent %}
+        {% component "unfold/components/card.html" with title=_("Average time to first purchase") %}
+        {% component "unfold/components/text.html" %}
+        {{avg_time_to_first_purchase}}
         {% endcomponent %}
-    {% endcomponent %}
+        {% endcomponent %}
+    <div>
 {% endblock %}

@@ -1,5 +1,5 @@
 from rest_framework import serializers, fields
-from jobs.models import Job, Category, SubCategory, Review, JobPauseReason, REASON_CHOICES, SiteImage
+from jobs.models import Job, Category, SubCategory, Review, JobPauseReason, REASON_CHOICES, SiteImage, Area
 from service_provider.models import Bid
 
 class JobSerializer(serializers.ModelSerializer):
@@ -19,16 +19,17 @@ class JobSerializer(serializers.ModelSerializer):
     ]
 
   def create(self, validated_data):
-    # Remove site_images before creating the Job
     site_images = validated_data.pop('site_images', [])
     job = Job.objects.create(**validated_data)
 
-    # Attach images after job is created
     for image in site_images:
       SiteImage.objects.create(job=job, image=image)
 
     return job
-
+class AreaSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Area
+    fields = '__all__'
 class SitePhotoSerializer(serializers.ModelSerializer):
   class Meta:
     model = SiteImage

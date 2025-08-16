@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 from yaml import serializer
 
 from accounts.models import User
-from jobs.models import Category, SubCategory, Job, JobPauseReason, SiteImage
+from jobs.models import Category, SubCategory, Job, JobPauseReason, SiteImage, Area
 from jobs.serializers import JobSerializer, CategorySerializer, CategoryDetailListSerializer, AddSubCategorySerializer, \
-  BidStatusUpdateSerializer, ReviewSerializer, JobPausingReasonSerializer
+  BidStatusUpdateSerializer, ReviewSerializer, JobPausingReasonSerializer, AreaSerializer
 from service_provider.models import Bid, CompanyProfile
 
 
@@ -39,6 +39,14 @@ class JobAPIView(APIView):
     first_error = next(iter(errors.values()))[0]
     return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
+class AreaAPIView(APIView):
+  permission_classes = [IsAuthenticated]
+  def get(self, request):
+    if request.user:
+      areas = Area.objects.all()
+      serializer = AreaSerializer(areas, many=True)
+      return Response(serializer.data)
+    return Response({'error':"Please login first"},status=status.HTTP_401_UNAUTHORIZED)
 
 class CategoryAPIView(APIView):
   permission_classes = [AllowAny]

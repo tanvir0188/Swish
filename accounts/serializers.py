@@ -51,6 +51,7 @@ class ProfileSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
     fields = ['first_name', 'surname', 'telephone', 'email', 'home_address', 'city', 'image', 'role']
+    read_only_fields = ['role']
 
 class OTPSerializer(serializers.Serializer):
   email = serializers.EmailField()

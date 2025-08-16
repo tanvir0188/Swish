@@ -82,9 +82,9 @@ class JobDetailAPIView(APIView):
         }, status=status.HTTP_403_FORBIDDEN)
       return Response(serializer.data, status=status.HTTP_200_OK)
     except Job.DoesNotExist:
-      return Response({'detail': 'Job not found.'}, status=status.HTTP_404_NOT_FOUND)
+      return Response({'error': 'Job not found.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-      return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+      return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class EditSubCategoryAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -156,7 +156,9 @@ class CompanyProfileAPIView(APIView):
       serializer.save(user=user)
       return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class CompanyProfileDetailAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -212,10 +214,11 @@ class CompanyLogoAndWallpaperAPIView(APIView):
       if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+      errors = serializer.errors
+      first_error = next(iter(errors.values()))[0]
+      return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
       return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @extend_schema(
   methods=["PATCH"],
@@ -352,11 +355,11 @@ def add_area(request):
 @permission_classes([IsAuthenticated])
 def add_work_type(request):
   if request.user.role != 'company':
-    return Response({"detail": "Only companies can add work types."}, status=status.HTTP_403_FORBIDDEN)
+    return Response({"error": "Only companies can add work types."}, status=status.HTTP_403_FORBIDDEN)
 
   work_type_name = request.data.get('work_type')
   if not work_type_name:
-    return Response({"detail": "Work type is required."}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({"error": "Work type is required."}, status=status.HTTP_400_BAD_REQUEST)
 
   # Get or create the SubCategory object
   subcategory_obj, created = SubCategory.objects.get_or_create(name=work_type_name)
@@ -397,7 +400,9 @@ class ToggleFavoriteAPIView(APIView):
       else:
         Favorite.objects.create(user=user, job=job)
         return Response({'message': 'Added to favorites'}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
   parameters=[
@@ -533,16 +538,15 @@ class CompanyBiddingAPIView(APIView):
 
     if serializer.is_valid():
       if not is_unlocked:
-        return Response({'message': "You have not unlocked this job yet"}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'error': "You have not unlocked this job yet"}, status=status.HTTP_403_FORBIDDEN)
       serializer.save(job=job, bidding_company=bidding_company)
       return Response({
         "data":serializer.data,
         "message": f"Bid submitted for '{job.heading}'"
       }, status=status.HTTP_201_CREATED)
-    return Response({
-      "error": serializer.errors,
-      "message": 'Something went wrong.',
-    }, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
   @extend_schema(
     request=BiddingSerializer,
@@ -616,7 +620,9 @@ class EmployeeListAPIView(APIView):
     if serializer.is_valid():
       serializer.save(company=company_profile)
       return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
-    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class EmployeeDetailAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -645,7 +651,9 @@ class EmployeeDetailAPIView(APIView):
       if serializer.is_valid():
         serializer.save()
         return Response({'data': serializer.data}, status=status.HTTP_200_OK)
-      return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+      errors = serializer.errors
+      first_error = next(iter(errors.values()))[0]
+      return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
       return Response({
         "error": str(e),

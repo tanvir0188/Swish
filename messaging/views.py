@@ -155,7 +155,6 @@ class WonRoomListAPIView(APIView):
 		serializer = RoomListSerializer(rooms, many=True, context={'request': request})
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class MessagePagination(PageNumberPagination):
 	page_size = 50
 

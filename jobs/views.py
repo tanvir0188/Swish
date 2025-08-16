@@ -35,7 +35,9 @@ class JobAPIView(APIView):
         'status': 'success'
       }, status=status.HTTP_201_CREATED)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryAPIView(APIView):
@@ -170,7 +172,9 @@ def change_bid_status(request, pk):
       return Response({'message': 'Bid status updated', 'bid': bid.status, 'job_status': job.status},
                       status=status.HTTP_200_OK)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
   except Bid.DoesNotExist:
     return Response({'error': 'Bid not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -237,7 +241,9 @@ class ReviewAPIView(APIView):
       serializer.save(user=request.user, service_provider=service_provider)
       return Response({'message': 'Review posted successfully.'}, status=status.HTTP_201_CREATED)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class JobPausingReasonAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -268,7 +274,9 @@ class JobPausingReasonAPIView(APIView):
         serializer.save(job=job)
         return Response({'message': 'Thanks for your feedback.'}, status=status.HTTP_201_CREATED)
 
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+      errors = serializer.errors
+      first_error = next(iter(errors.values()))[0]
+      return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
       return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

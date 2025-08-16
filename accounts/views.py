@@ -41,7 +41,9 @@ class RegisterView(APIView):
         }
       }
       return Response(response_data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class ProfileView(APIView):
   permission_classes = [IsAuthenticated]
@@ -55,7 +57,9 @@ class ProfileView(APIView):
     if serializer.is_valid():
       serializer.save()
       return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error":first_error}, status=status.HTTP_400_BAD_REQUEST)
 
   def get(self, request):
     user = request.user
@@ -188,7 +192,9 @@ class VerifyOTPView(APIView):
         'refresh': str(refresh),
       }, status=200)
 
-    return Response(serializer.errors, status=400)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -205,8 +211,10 @@ class LogoutAPIView(APIView):
         RefreshToken(refresh_token).blacklist()
         return Response({'message': 'Successfully logged out'}, status=status.HTTP_205_RESET_CONTENT)
       except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class ChangePasswordAPIView(APIView):
   permission_classes = [IsAuthenticated]
@@ -221,7 +229,9 @@ class ChangePasswordAPIView(APIView):
     serializer = ChangePasswordSerializer(data=request.data)
 
     if not serializer.is_valid():
-      return Response(serializer.errors, status=400)
+      errors = serializer.errors
+      first_error = next(iter(errors.values()))[0]
+      return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
     new_password = serializer.validated_data['new_password']
 
@@ -242,7 +252,9 @@ class FeedbackAPIView(APIView):
       if serializer.is_valid():
         serializer.save(user=request.user)
         return Response('Feedback posted successfully', status=200)
-      return Response(serializer.errors, status=400)
+      errors = serializer.errors
+      first_error = next(iter(errors.values()))[0]
+      return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
       return Response({'error': str(e)}, status=400)
 
@@ -260,7 +272,9 @@ class ChangeRoleApiView(APIView):
       serializer.save()
       return Response({'message': f'Role updated to {user.role}'}, status=200)
 
-    return Response(serializer.errors, status=400)
+    errors = serializer.errors
+    first_error = next(iter(errors.values()))[0]
+    return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
 class MyTokenObtainPairView(TokenObtainPairView):
   serializer_class = MyTokenObtainPairSerializer

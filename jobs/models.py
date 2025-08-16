@@ -61,7 +61,7 @@ class Job(models.Model):
   description = models.TextField(blank=False, null=False)
   estimated_time = models.CharField(max_length=100, blank=False, null=False)
   employee_need = models.IntegerField(blank=False, null=False)
-  area = models.ForeignKey('Area', on_delete=models.CASCADE, related_name='job_areas')
+  area = models.ForeignKey('Area', on_delete=models.SET_NULL,null=True, related_name='job_areas')
   value = models.FloatField(blank=True, null=True)
   category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='jobs')
   custom_category = models.ForeignKey(CustomCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')

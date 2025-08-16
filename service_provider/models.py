@@ -88,6 +88,7 @@ class TokenPackage(models.Model):
   package_balance=models.PositiveIntegerField(blank=False, null=False)
   issued_at=models.DateTimeField(auto_now_add=True)
   expires_at=models.DateTimeField(blank=False, null=False)
+  is_partner=models.BooleanField(default=False, blank=False, null=False)
 
   def save(self, *args, **kwargs):
     now = timezone.now()

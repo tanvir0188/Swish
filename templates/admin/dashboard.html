@@ -1,10 +1,9 @@
 {% extends "unfold/layouts/base.html" %}
 {% load i18n unfold %}
 
-{% block content %}
-
-    <div class="flex gap-3">
-
+{% block content  %}
+{% component "unfold/components/title.html"  with class="mb-2" %} Free token funnel (Trial Performance) {% endcomponent %}
+    <div class="flex gap-3 mb-5">
             {% component "unfold/components/card.html" with title=_("Users Used All 40 Free Tokens") %}
                 {% component "unfold/components/text.html" %}
                     {{percent_used_all_tokens}} %
@@ -26,5 +25,88 @@
         {{avg_time_to_first_purchase}}
         {% endcomponent %}
         {% endcomponent %}
-    <div>
+    </div>
+{% component "unfold/components/title.html"  with class="mb-2" %} Job and category performance {% endcomponent %}
+
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+
+<div class="my-2 flex items-center space-x-2">
+  <b>Day</b> &nbsp;
+  <input type="checkbox" id="jobToggle"
+    class="appearance-none bg-base-300 block cursor-pointer h-5 relative rounded-full transition-colors w-8 min-w-8
+           focus:outline-2 focus:outline-offset-2 focus:outline-primary-600
+           after:absolute after:bg-white after:content-[''] after:bg-red-300 after:h-3 after:rounded-full
+           after:shadow-xs after:transition-all after:left-1 after:top-1 after:w-3
+           checked:bg-green-500 checked:after:left-4
+           dark:bg-base-600 dark:checked:bg-green-700"
+    checked> &nbsp;
+  <b>Week</b>
+</div>
+
+<div class="grid grid-cols-2 border gap-4">
+  <div class="col-span-1">
+    <div class="max-w-sm w-full rounded-lg shadow-sm dark:bg-gray-800 p-4 md:p-6">
+      <div class="flex justify-between pb-4 mb-4 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <span id="chartLabel"
+            class="bg-green-100 text-green-800 text-xs font-medium inline-flex items-center px-2.5 py-1 rounded-md
+                   dark:bg-green-900 dark:text-green-300">
+            Jobs Created (Weekly)
+          </span>
+        </div>
+      </div>
+
+      <!-- Chart container -->
+      <canvas id="column-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Injected data from Django context
+  const jobsPerWeek = {{ jobs_per_week|safe }};
+  const jobsPerDay = {{ jobs_per_day|safe }};
+
+  const ctx = document.getElementById('column-chart').getContext('2d');
+  const chartLabel = document.getElementById('chartLabel');
+
+  let chart = new Chart(ctx, {
+    type: 'bar',
+    data: jobsPerWeek,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        title: { display: true, text: 'Jobs Created Per Week' }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Week' } },
+        y: { title: { display: true, text: 'Number of Jobs' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Toggle between Day <-> Week
+  document.getElementById('jobToggle').addEventListener('change', function() {
+    if (this.checked) {
+      // Week view
+      chart.data = jobsPerWeek;
+      chart.options.plugins.title.text = "Jobs Created Per Week";
+      chart.options.scales.x.title.text = "Week";
+      chartLabel.innerText = "Jobs Created (Weekly)";
+    } else {
+      // Day view
+      chart.data = jobsPerDay;
+      chart.options.plugins.title.text = "Jobs Created Per Day";
+      chart.options.scales.x.title.text = "Day";
+      chartLabel.innerText = "Jobs Created (Daily)";
+    }
+    chart.update();
+  });
+</script>
+
+
 {% endblock %}
